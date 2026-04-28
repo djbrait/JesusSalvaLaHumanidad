@@ -119,13 +119,13 @@
 </div>
 <canvas id="game"></canvas>
 <div id="touch-controls">
-    <div class="touch-btn" id="btn-left">◀</div>
-    <div class="touch-btn" id="btn-right">▶</div>
-    <div class="touch-btn" id="btn-jump">⬆</div>
-    <div class="touch-btn" id="btn-dash">💨</div>
-    <div class="touch-btn" id="btn-z">⚡</div>
-    <div class="touch-btn" id="btn-x">★</div>
-    <div class="touch-btn" id="btn-pause">❚❚</div>
+    <div class="touch-btn" id="btn-left" style="display:none;">◀</div>
+    <div class="touch-btn" id="btn-right" style="display:none;">▶</div>
+    <div class="touch-btn" id="btn-jump" style="display:none;">⬆</div>
+    <div class="touch-btn" id="btn-dash" style="display:none;">💨</div>
+    <div class="touch-btn" id="btn-z" style="display:none;">⚡</div>
+    <div class="touch-btn" id="btn-x" style="display:none;">★</div>
+    <div class="touch-btn" id="btn-pause" style="display:none;">❚❚</div>
     <div class="touch-btn" id="btn-bonus-up" style="display:none;">▲</div>
     <div class="touch-btn" id="btn-bonus-down" style="display:none;">▼</div>
 </div>
@@ -5725,20 +5725,24 @@ function resizeCanvas() {
         const bonusDown = document.getElementById('btn-bonus-down');
         
         // D-pad left side
-        left.style.cssText = `width:${btnSize}px;height:${btnSize}px;bottom:${pad}px;left:${pad}px;font-size:${btnSize*0.4}px;color:#fff;`;
-        right.style.cssText = `width:${btnSize}px;height:${btnSize}px;bottom:${pad}px;left:${pad + btnSize + 10}px;font-size:${btnSize*0.4}px;color:#fff;`;
-        dash.style.cssText = `width:${smallBtn}px;height:${smallBtn}px;bottom:${pad + btnSize + 10}px;left:${pad}px;font-size:${smallBtn*0.35}px;color:#00d4ff;`;
+        function setBtnStyle(el, styles) {
+            for (const [k, v] of Object.entries(styles)) el.style[k] = v;
+        }
+        setBtnStyle(left, {width:`${btnSize}px`,height:`${btnSize}px`,bottom:`${pad}px`,left:`${pad}px`,right:'',fontSize:`${btnSize*0.4}px`,color:'#fff',marginLeft:''});
+        setBtnStyle(right, {width:`${btnSize}px`,height:`${btnSize}px`,bottom:`${pad}px`,left:`${pad + btnSize + 10}px`,right:'',fontSize:`${btnSize*0.4}px`,color:'#fff',marginLeft:''});
+        setBtnStyle(dash, {width:`${smallBtn}px`,height:`${smallBtn}px`,bottom:`${pad + btnSize + 10}px`,left:`${pad}px`,right:'',fontSize:`${smallBtn*0.35}px`,color:'#00d4ff',marginLeft:''});
         
         // Action buttons right side
-        jump.style.cssText = `width:${jumpBtn}px;height:${jumpBtn}px;bottom:${pad + smallBtn + 10}px;right:${pad}px;font-size:${jumpBtn*0.32}px;color:#ff4444;`;
-        btnZ.style.cssText = `width:${smallBtn}px;height:${smallBtn}px;bottom:${pad}px;right:${pad + smallBtn + 14}px;font-size:${smallBtn*0.38}px;color:#00ff44;`;
-        btnX.style.cssText = `width:${smallBtn}px;height:${smallBtn}px;bottom:${pad}px;right:${pad}px;font-size:${smallBtn*0.38}px;color:#FFD700;`;
+        setBtnStyle(jump, {width:`${jumpBtn}px`,height:`${jumpBtn}px`,bottom:`${pad + smallBtn + 10}px`,right:`${pad}px`,left:'',fontSize:`${jumpBtn*0.32}px`,color:'#ff4444',marginLeft:''});
+        setBtnStyle(btnZ, {width:`${smallBtn}px`,height:`${smallBtn}px`,bottom:`${pad}px`,right:`${pad + smallBtn + 14}px`,left:'',fontSize:`${smallBtn*0.38}px`,color:'#00ff44',marginLeft:''});
+        setBtnStyle(btnX, {width:`${smallBtn}px`,height:`${smallBtn}px`,bottom:`${pad}px`,right:`${pad}px`,left:'',fontSize:`${smallBtn*0.38}px`,color:'#FFD700',marginLeft:''});
         
         // Bonus buttons (centered, large)
         const bigBtn = Math.max(68, btnSize * 1.3);
-        bonusUp.style.cssText = `width:${bigBtn}px;height:${bigBtn}px;bottom:${pad + bigBtn + 14}px;left:50%;margin-left:-${bigBtn/2}px;font-size:${bigBtn*0.4}px;display:none;`;
-        bonusDown.style.cssText = `width:${bigBtn}px;height:${bigBtn}px;bottom:${pad}px;left:50%;margin-left:-${bigBtn/2}px;font-size:${bigBtn*0.4}px;display:none;`;
+        setBtnStyle(bonusUp, {width:`${bigBtn}px`,height:`${bigBtn}px`,bottom:`${pad + bigBtn + 14}px`,left:'50%',right:'',marginLeft:`-${bigBtn/2}px`,fontSize:`${bigBtn*0.4}px`});
+        setBtnStyle(bonusDown, {width:`${bigBtn}px`,height:`${bigBtn}px`,bottom:`${pad}px`,left:'50%',right:'',marginLeft:`-${bigBtn/2}px`,fontSize:`${bigBtn*0.4}px`});
         
+        _lastTouchLayout = '';
         updateTouchLayout();
     } else {
         // Desktop: center canvas, fill screen
