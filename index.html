@@ -260,17 +260,41 @@ function stopMusic() {
     if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
 }
 
-// Pausar música cuando el dispositivo se bloquea o la app pasa a segundo plano
+// Pausar TODO el audio cuando el dispositivo se bloquea o la app pasa a segundo plano
 let _musicWasPlaying = false;
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        _musicWasPlaying = musicPlaying;
-        if (musicPlaying) stopMusic();
-        if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
-    } else {
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-        if (_musicWasPlaying && musicEnabled) startMusic();
+let _appHidden = false;
+
+function handleAppHidden() {
+    if (_appHidden) return;
+    _appHidden = true;
+    _musicWasPlaying = musicPlaying;
+    if (musicPlaying) stopMusic();
+    // Cerrar AudioContext completamente para cortar osciladores ya programados
+    if (audioCtx) {
+        try { audioCtx.close(); } catch(e) {}
+        audioCtx = null;
     }
+}
+
+function handleAppVisible() {
+    if (!_appHidden) return;
+    _appHidden = false;
+    // AudioContext se re-crea automáticamente en ensureAudio() al necesitarse
+    if (_musicWasPlaying && musicEnabled) startMusic();
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) handleAppHidden();
+    else handleAppVisible();
+});
+window.addEventListener('pagehide', handleAppHidden);
+window.addEventListener('pageshow', handleAppVisible);
+window.addEventListener('blur', () => {
+    // Solo en móvil: blur = cambio de app / pantalla bloqueada
+    if ('ontouchstart' in window) handleAppHidden();
+});
+window.addEventListener('focus', () => {
+    if ('ontouchstart' in window) handleAppVisible();
 });
 
 // ---- INPUT ----
