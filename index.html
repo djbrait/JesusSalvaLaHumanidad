@@ -260,6 +260,19 @@ function stopMusic() {
     if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
 }
 
+// Pausar música cuando el dispositivo se bloquea o la app pasa a segundo plano
+let _musicWasPlaying = false;
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        _musicWasPlaying = musicPlaying;
+        if (musicPlaying) stopMusic();
+        if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+    } else {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        if (_musicWasPlaying && musicEnabled) startMusic();
+    }
+});
+
 // ---- INPUT ----
 const keys = {};
 const touchKeys = {};
