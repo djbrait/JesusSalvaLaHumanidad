@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chico-estrella-v1';
+const CACHE_NAME = 'chico-estrella-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -28,10 +28,15 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch: cache-first para assets
+// Fetch: network-first (siempre busca la versión nueva, cache como fallback offline)
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request)
-      .then(cached => cached || fetch(e.request))
+    fetch(e.request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
