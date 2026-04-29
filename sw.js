@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chico-estrella-v4';
+const CACHE_NAME = 'chico-estrella-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -7,7 +7,7 @@ const ASSETS = [
   './icons/icon-512.png'
 ];
 
-// Install: cachear assets
+// Install: cachear assets y activar inmediatamente
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
@@ -16,7 +16,7 @@ self.addEventListener('install', e => {
   );
 });
 
-// Activate: limpiar caches viejos
+// Activate: limpiar caches viejos y tomar control
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -39,4 +39,9 @@ self.addEventListener('fetch', e => {
       })
       .catch(() => caches.match(e.request))
   );
+});
+
+// Permitir skipWaiting desde el cliente
+self.addEventListener('message', e => {
+  if (e.data === 'skipWaiting') self.skipWaiting();
 });

@@ -300,7 +300,22 @@ window.addEventListener('focus', () => {
 // ---- INPUT ----
 const keys = {};
 const touchKeys = {};
-window.addEventListener('keydown', e => { keys[e.code] = true; e.preventDefault(); });
+window.addEventListener('keydown', e => {
+    if (leaderboardPhase === 'enterName') {
+        e.preventDefault();
+        if (e.key === 'Backspace') {
+            enterNameText = enterNameText.slice(0, -1);
+        } else if (e.key === 'Enter' && enterNameText.trim().length > 0) {
+            confirmNameEntry();
+        } else if (e.key === 'Escape') {
+            skipNameEntry();
+        } else if (e.key.length === 1 && /[a-zA-Z0-9 ]/.test(e.key) && enterNameText.length < 10) {
+            enterNameText += e.key.toUpperCase();
+        }
+        return;
+    }
+    keys[e.code] = true; e.preventDefault();
+});
 window.addEventListener('keyup', e => { keys[e.code] = false; e.preventDefault(); });
 
 // Touch controls
@@ -360,6 +375,175 @@ function saveMarketData() {
     localStorage.setItem('chicoEstrella_selectedSkin', selectedSkin);
     localStorage.setItem('chicoEstrella_unlockedSkins', JSON.stringify(unlockedSkins));
 }
+// ---- LEADERBOARD ----
+let leaderboard = [];
+try { leaderboard = JSON.parse(localStorage.getItem('chicoEstrella_leaderboard')) || []; } catch(e) { leaderboard = []; }
+let leaderboardPhase = 'none';
+let enterNameText = '';
+let enterNameSource = '';
+let lastLeaderboardIndex = -1;
+
+function getLeaderboard() {
+    try { return JSON.parse(localStorage.getItem('chicoEstrella_leaderboard')) || []; }
+    catch(e) { return []; }
+}
+
+function saveToLeaderboard(name, playerScore) {
+    const lb = getLeaderboard();
+    const entry = { name: name.substring(0, 10), score: playerScore };
+    lb.push(entry);
+    lb.sort((a, b) => b.score - a.score);
+    if (lb.length > 10) lb.length = 10;
+    lastLeaderboardIndex = lb.indexOf(entry);
+    localStorage.setItem('chicoEstrella_leaderboard', JSON.stringify(lb));
+    leaderboard = lb;
+}
+
+function scoreQualifiesForLeaderboard(playerScore) {
+    if (playerScore <= 0) return false;
+    const lb = getLeaderboard();
+    if (lb.length < 10) return true;
+    return playerScore > lb[lb.length - 1].score;
+}
+
+function confirmNameEntry() {
+    if (enterNameText.trim().length === 0) return;
+    saveToLeaderboard(enterNameText.trim(), score);
+    leaderboardPhase = 'showLeaderboard';
+}
+
+function skipNameEntry() {
+    lastLeaderboardIndex = -1;
+    leaderboard = getLeaderboard();
+    leaderboardPhase = 'showLeaderboard';
+}
+
+const NAME_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const NAME_CELL_W = 46;
+const NAME_CELL_H = 42;
+const NAME_GRID_COLS = 9;
+
+function getNameGridLayout() {
+    const rows = Math.ceil(NAME_CHARS.length / NAME_GRID_COLS);
+    const gridW = NAME_GRID_COLS * NAME_CELL_W;
+    const gridX = (canvas.width - gridW) / 2;
+    const gridY = canvas.height / 2 - 10;
+    return { gridX, gridY, gridW, rows };
+}
+
+function handleNameGridTouch(tx, ty) {
+    const { gridX, gridY, rows } = getNameGridLayout();
+    for (let i = 0; i < NAME_CHARS.length; i++) {
+        const col = i % NAME_GRID_COLS;
+        const row = Math.floor(i / NAME_GRID_COLS);
+        const x = gridX + col * NAME_CELL_W;
+        const y = gridY + row * NAME_CELL_H;
+        if (tx >= x && tx < x + NAME_CELL_W && ty >= y && ty < y + NAME_CELL_H) {
+            if (enterNameText.length < 10) enterNameText += NAME_CHARS[i];
+            return true;
+        }
+    }
+    const specialY = gridY + rows * NAME_CELL_H;
+    if (tx >= gridX && tx < gridX + NAME_CELL_W * 4 && ty >= specialY && ty < specialY + NAME_CELL_H) {
+        enterNameText = enterNameText.slice(0, -1);
+        return true;
+    }
+    const okX = gridX + NAME_CELL_W * 5;
+    if (tx >= okX && tx < okX + NAME_CELL_W * 4 && ty >= specialY && ty < specialY + NAME_CELL_H) {
+        confirmNameEntry();
+        return true;
+    }
+    return false;
+}
+
+function handleLeaderboardTouch(tx, ty) {
+    if (leaderboardPhase === 'enterName') {
+        handleNameGridTouch(tx, ty);
+    } else if (leaderboardPhase === 'showLeaderboard' || leaderboardPhase === 'done') {
+        keys['Enter'] = true;
+        setTimeout(() => keys['Enter'] = false, 100);
+    }
+}
+
+function drawNameEntryUI() {
+    const { gridX, gridY, rows } = getNameGridLayout();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 22px Arial';
+    ctx.fillText('¡INGRESÁ TU NOMBRE!', canvas.width / 2, canvas.height / 2 - 80);
+    const cursor = Math.sin(Date.now() * 0.006) > 0 ? '▌' : '';
+    ctx.fillStyle = '#00d4ff';
+    ctx.font = 'bold 30px Arial';
+    ctx.fillText((enterNameText || '') + cursor, canvas.width / 2, canvas.height / 2 - 40);
+    for (let i = 0; i < NAME_CHARS.length; i++) {
+        const col = i % NAME_GRID_COLS;
+        const row = Math.floor(i / NAME_GRID_COLS);
+        const x = gridX + col * NAME_CELL_W;
+        const y = gridY + row * NAME_CELL_H;
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(x + 2, y + 2, NAME_CELL_W - 4, NAME_CELL_H - 4);
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 2, y + 2, NAME_CELL_W - 4, NAME_CELL_H - 4);
+        ctx.fillStyle = '#fff';
+        ctx.font = '18px Arial';
+        ctx.fillText(NAME_CHARS[i], x + NAME_CELL_W / 2, y + NAME_CELL_H / 2 + 6);
+    }
+    const specialY = gridY + rows * NAME_CELL_H;
+    ctx.fillStyle = 'rgba(255,80,80,0.15)';
+    ctx.fillRect(gridX + 2, specialY + 2, NAME_CELL_W * 4 - 4, NAME_CELL_H - 4);
+    ctx.strokeStyle = '#ff5050';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(gridX + 2, specialY + 2, NAME_CELL_W * 4 - 4, NAME_CELL_H - 4);
+    ctx.fillStyle = '#ff5050';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('BORRAR', gridX + NAME_CELL_W * 2, specialY + NAME_CELL_H / 2 + 6);
+    const okEnabled = enterNameText.trim().length > 0;
+    const okX = gridX + NAME_CELL_W * 5;
+    ctx.fillStyle = okEnabled ? 'rgba(80,255,80,0.15)' : 'rgba(100,100,100,0.08)';
+    ctx.fillRect(okX + 2, specialY + 2, NAME_CELL_W * 4 - 4, NAME_CELL_H - 4);
+    ctx.strokeStyle = okEnabled ? '#50ff50' : '#555';
+    ctx.strokeRect(okX + 2, specialY + 2, NAME_CELL_W * 4 - 4, NAME_CELL_H - 4);
+    ctx.fillStyle = okEnabled ? '#50ff50' : '#555';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('ACEPTAR', okX + NAME_CELL_W * 2, specialY + NAME_CELL_H / 2 + 6);
+    ctx.fillStyle = '#888';
+    ctx.font = '13px Arial';
+    ctx.fillText('Tipeá con el teclado o tocá las letras', canvas.width / 2, canvas.height - 20);
+    ctx.textAlign = 'left';
+}
+
+function drawLeaderboardUI() {
+    const lb = leaderboard;
+    const startY = 140;
+    const lineH = 28;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('🏆 TOP 10 PUNTAJES', canvas.width / 2, startY);
+    if (lb.length === 0) {
+        ctx.fillStyle = '#888';
+        ctx.font = '18px Arial';
+        ctx.fillText('No hay puntajes registrados', canvas.width / 2, startY + 50);
+    } else {
+        for (let i = 0; i < lb.length; i++) {
+            const y = startY + 35 + i * lineH;
+            const isNew = (i === lastLeaderboardIndex);
+            if (isNew) {
+                ctx.fillStyle = 'rgba(0,212,255,0.15)';
+                ctx.fillRect(canvas.width / 2 - 180, y - 18, 360, lineH);
+            }
+            ctx.fillStyle = isNew ? '#00d4ff' : (i < 3 ? '#FFD700' : '#ccc');
+            ctx.font = isNew ? 'bold 17px Arial' : '17px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`${(i + 1).toString().padStart(2)}.  ${lb[i].name}`, canvas.width / 2 - 170, y);
+            ctx.textAlign = 'right';
+            ctx.fillText(`${lb[i].score}`, canvas.width / 2 + 170, y);
+        }
+    }
+    ctx.textAlign = 'left';
+}
+
 let currentLevel = 0;
 let lives = 5;
 const MAX_LIVES = 5;
@@ -399,6 +583,7 @@ function togglePause() {
     }
 }
 window.addEventListener('keydown', e => {
+    if (leaderboardPhase === 'enterName') return;
     if (e.code === 'KeyP') togglePause();
 });
 
@@ -3135,7 +3320,18 @@ function damagePlayer(dmg) {
         sfxDeath();
         lives--;
         if (lives <= 0) {
-            setTimeout(() => { gameState = 'gameOver'; gameOverTimer = 0; stopMusic(); }, 1000);
+            setTimeout(() => {
+                gameState = 'gameOver'; gameOverTimer = 0; stopMusic();
+                for (const k in keys) keys[k] = false;
+                if (scoreQualifiesForLeaderboard(score)) {
+                    leaderboardPhase = 'enterName';
+                    enterNameText = '';
+                } else {
+                    lastLeaderboardIndex = -1;
+                    leaderboard = getLeaderboard();
+                    leaderboardPhase = 'showLeaderboard';
+                }
+            }, 1000);
         } else {
             setTimeout(() => {
                 if (gameState === 'bossFight') {
@@ -4862,6 +5058,8 @@ function drawTitleScreen() {
             currentLevel = 0;
             lives = MAX_LIVES;
             score = 0;
+            leaderboardPhase = 'none';
+            savedCheckpoint = { level: 0, score: 0, x: 80 };
             fadeOut(() => {
                 gameState = 'story';
                 fadeIn();
@@ -5457,13 +5655,29 @@ function drawGameOverScreen() {
     
     ctx.fillStyle = '#f44336';
     ctx.font = 'bold 48px Arial';
-    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 60);
+    ctx.fillText('GAME OVER', canvas.width/2, 70);
     
     ctx.fillStyle = '#fff';
     ctx.font = '20px Arial';
-    ctx.fillText(`Puntos: ${score}`, canvas.width/2, canvas.height/2 - 15);
+    ctx.fillText(`Puntos: ${score}`, canvas.width/2, 105);
     
-    if (gameOverTimer > 60) {
+    if (leaderboardPhase === 'enterName') {
+        drawNameEntryUI();
+    } else if (leaderboardPhase === 'showLeaderboard') {
+        drawLeaderboardUI();
+        const blink = Math.sin(Date.now() * 0.005) > 0;
+        if (blink) {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#FFD700';
+            ctx.font = '16px Arial';
+            ctx.fillText('Presioná ENTER o tocá para continuar', canvas.width/2, canvas.height - 25);
+        }
+        if (keys['Enter']) {
+            keys['Enter'] = false;
+            leaderboardPhase = 'done';
+            gameOverTimer = 61;
+        }
+    } else if (gameOverTimer > 60) {
         const blink = Math.sin(Date.now() * 0.005) > 0;
         
         // Continue option
@@ -5480,6 +5694,7 @@ function drawGameOverScreen() {
             keys['Enter'] = false;
             lives = MAX_LIVES;
             score = savedCheckpoint.score;
+            leaderboardPhase = 'none';
             fadeOut(() => {
                 startLevel(savedCheckpoint.level);
                 fadeIn();
@@ -5491,6 +5706,7 @@ function drawGameOverScreen() {
             score = 0;
             currentLevel = 0;
             storyIndex = 0;
+            leaderboardPhase = 'none';
             fadeOut(() => {
                 gameState = 'story';
                 fadeIn();
@@ -5568,6 +5784,15 @@ function updateBonus() {
         if (currentLevel >= 5) {
             fadeOut(() => {
                 gameState = 'victory';
+                for (const k in keys) keys[k] = false;
+                if (scoreQualifiesForLeaderboard(score)) {
+                    leaderboardPhase = 'enterName';
+                    enterNameText = '';
+                } else {
+                    lastLeaderboardIndex = -1;
+                    leaderboard = getLeaderboard();
+                    leaderboardPhase = 'showLeaderboard';
+                }
                 fadeIn();
             });
         } else {
@@ -5675,47 +5900,64 @@ function drawVictoryScreen() {
     }
     ctx.globalAlpha = 1;
     
-    // Draw the selected character celebrating
-    drawPlayerCharacter(canvas.width/2 - 40, canvas.height/2 + 20, 80, 120, 1, t * 15, false, 0);
-    
     ctx.textAlign = 'center';
-    
-    const heroName = SKIN_NAMES[selectedSkin];
     
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 44px Arial';
-    ctx.fillText('¡¡¡VICTORIA!!!', canvas.width/2, 80);
-    
-    ctx.fillStyle = '#00d4ff';
-    ctx.font = '22px Arial';
-    ctx.fillText('¡' + heroName + ' salvó a la Tierra!', canvas.width/2, 120);
+    ctx.fillText('¡¡¡VICTORIA!!!', canvas.width/2, 65);
     
     ctx.fillStyle = '#fff';
-    ctx.font = '16px Arial';
-    ctx.fillText('Los villanos fueron derrotados y la paz reina de nuevo.', canvas.width/2, 160);
-    if (selectedSkin === 0) {
-        ctx.fillText('El héroe del planeta Crux protege Argentina y el mundo entero.', canvas.width/2, 185);
+    ctx.font = '20px Arial';
+    ctx.fillText(`Puntuación Final: ${score}`, canvas.width/2, 100);
+    
+    if (leaderboardPhase === 'enterName') {
+        drawNameEntryUI();
+    } else if (leaderboardPhase === 'showLeaderboard') {
+        drawLeaderboardUI();
+        const blink = Math.sin(t * 4) > 0;
+        if (blink) {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#FFD700';
+            ctx.font = '16px Arial';
+            ctx.fillText('Presioná ENTER o tocá para continuar', canvas.width/2, canvas.height - 25);
+        }
+        if (keys['Enter']) {
+            keys['Enter'] = false;
+            leaderboardPhase = 'done';
+        }
     } else {
-        ctx.fillText(heroName + ' demostró ser un verdadero héroe para Argentina y el mundo.', canvas.width/2, 185);
-    }
-    
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 28px Arial';
-    ctx.fillText(`Puntuación Final: ${score}`, canvas.width/2, canvas.height - 100);
-    
-    const blink = Math.sin(t * 4) > 0;
-    if (blink) {
-        ctx.fillStyle = '#FFD700';
+        // Normal victory celebration
+        drawPlayerCharacter(canvas.width/2 - 40, canvas.height/2 - 20, 80, 120, 1, t * 15, false, 0);
+        
+        const heroName = SKIN_NAMES[selectedSkin];
+        ctx.fillStyle = '#00d4ff';
+        ctx.font = '22px Arial';
+        ctx.fillText('¡' + heroName + ' salvó a la Tierra!', canvas.width/2, canvas.height/2 + 120);
+        
+        ctx.fillStyle = '#fff';
         ctx.font = '16px Arial';
-        ctx.fillText('Presioná ENTER para volver al inicio', canvas.width/2, canvas.height - 50);
-    }
-    
-    if (keys['Enter']) {
-        keys['Enter'] = false;
-        fadeOut(() => {
-            gameState = 'title';
-            fadeIn();
-        });
+        ctx.fillText('Los villanos fueron derrotados y la paz reina de nuevo.', canvas.width/2, canvas.height/2 + 150);
+        if (selectedSkin === 0) {
+            ctx.fillText('El héroe del planeta Crux protege Argentina y el mundo entero.', canvas.width/2, canvas.height/2 + 175);
+        } else {
+            ctx.fillText(heroName + ' demostró ser un verdadero héroe para Argentina y el mundo.', canvas.width/2, canvas.height/2 + 175);
+        }
+        
+        const blink = Math.sin(t * 4) > 0;
+        if (blink) {
+            ctx.fillStyle = '#FFD700';
+            ctx.font = '16px Arial';
+            ctx.fillText('Presioná ENTER para volver al inicio', canvas.width/2, canvas.height - 50);
+        }
+        
+        if (keys['Enter']) {
+            keys['Enter'] = false;
+            leaderboardPhase = 'none';
+            fadeOut(() => {
+                gameState = 'title';
+                fadeIn();
+            });
+        }
     }
     
     ctx.textAlign = 'left';
@@ -5801,11 +6043,9 @@ canvas.addEventListener('touchstart', (e) => {
         keys['Enter'] = true;
         setTimeout(() => keys['Enter'] = false, 100);
     } else if (gameState === 'gameOver') {
-        keys['Enter'] = true;
-        setTimeout(() => keys['Enter'] = false, 100);
+        handleLeaderboardTouch(tx, ty);
     } else if (gameState === 'victory') {
-        keys['Enter'] = true;
-        setTimeout(() => keys['Enter'] = false, 100);
+        handleLeaderboardTouch(tx, ty);
     }
 }, {passive: false});
 
@@ -5882,6 +6122,8 @@ canvas.addEventListener('click', (e) => {
                 return;
             }
         }
+    } else if (gameState === 'gameOver' || gameState === 'victory') {
+        handleLeaderboardTouch(tx, ty);
     }
 });
 
@@ -6067,16 +6309,25 @@ function gameLoop(timestamp) {
 
 requestAnimationFrame(gameLoop);
 
-// Registrar Service Worker
+// Registrar Service Worker con auto-actualización
 if ('serviceWorker' in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
   navigator.serviceWorker.register('sw.js')
     .then(reg => {
       console.log('SW registrado:', reg.scope);
+      setInterval(() => reg.update(), 60000);
       reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
         newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-            console.log('Nueva versión disponible. Recargá para actualizar.');
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('Nueva versión disponible, aplicando...');
+            newWorker.postMessage('skipWaiting');
           }
         });
       });

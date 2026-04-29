@@ -101,6 +101,7 @@ Las skins se desbloquean en el **Mercado** del menú principal usando las moneda
 - **Peleas contra jefes** al final de cada nivel.
 - **Historia narrada** entre niveles con cinemáticas de texto.
 - **Sistema de monedas** y tienda para desbloquear skins.
+- **Tabla de récords (Top 10)** con persistencia local, ingreso de nombre al finalizar la partida.
 - **Power-ups:** vuelo (float al mantener salto) y tamaño gigante.
 - **Nivel bonus** de recolección de monedas.
 - **Tutorial** integrado.
@@ -139,8 +140,10 @@ Estados posibles:
 │ bossFight    → Pelea contra jefe                        │
 │ bonus        → Nivel bonus de monedas                   │
 │ levelComplete→ Pantalla de nivel completado             │
-│ gameOver     → Pantalla de game over                    │
-│ victory      → Victoria final (todos los niveles)       │
+│ gameOver     → Pantalla de game over (con fases:        │
+│                 enterName, showLeaderboard, done)        │
+│ victory      → Victoria final (con fases:               │
+│                 enterName, showLeaderboard, done)        │
 │ paused       → Menú de pausa (con sub-estado de         │
 │                 confirmación para reiniciar/salir)       │
 └─────────────────────────────────────────────────────────┘
@@ -216,8 +219,9 @@ Todo el audio es **procedural** usando Web Audio API (no hay archivos de audio).
 | `chicoEstrella_totalCoins` | `int` | Monedas totales acumuladas |
 | `chicoEstrella_selectedSkin` | `int` (0-2) | Skin actualmente seleccionada |
 | `chicoEstrella_unlockedSkins` | `JSON bool[]` | Skins desbloqueadas `[true, false, false]` |
+| `chicoEstrella_leaderboard` | `JSON object[]` | Top 10 puntajes `[{name, score}, ...]` |
 
-**Función de guardado:** `saveMarketData()`
+**Función de guardado:** `saveMarketData()`, `saveToLeaderboard()`
 
 ### Detección de dispositivo
 
@@ -360,8 +364,8 @@ self.addEventListener('fetch', e => {
 });
 ```
 
-**Estrategia de caché recomendada:** Cache-first (ideal porque el juego es autocontenido).  
-**Actualización:** Incrementar `CACHE_NAME` a `v2`, `v3`, etc. al publicar cambios.
+**Estrategia de caché recomendada:** Network-first (busca la versión nueva, usa cache como fallback offline).  
+**Actualización:** Se auto-actualiza al detectar nueva versión del Service Worker. Firebase sirve `sw.js` sin caché (`Cache-Control: no-cache, no-store, must-revalidate`).
 
 #### 3. Cambios en `index.html`
 
@@ -516,8 +520,8 @@ JuegoChicoEstrella/
 - **localStorage** — persistencia de datos del jugador
 - **Fullscreen API** — inmersión completa
 - **Screen Orientation API** — forzar landscape
-- **Service Worker** *(por implementar)* — cache offline para PWA
-- **Web App Manifest** *(por implementar)* — instalabilidad PWA
+- **Service Worker** — cache offline para PWA con auto-actualización
+- **Web App Manifest** — instalabilidad PWA
 
 ---
 
