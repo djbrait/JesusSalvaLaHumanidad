@@ -3343,47 +3343,27 @@ function updatePlayer() {
         }
     }
     
-    // Z Attack: Eye laser (green beam projectile) / Chico Invisible: teleport to nearest enemy
+    // Z Attack: Eye laser / Chico Invisible: lanza un yunque
     if (player.attackCooldown > 0) player.attackCooldown--;
     if ((isKeyDown('KeyZ') || isKeyDown('KeyJ')) && player.attackCooldown === 0) {
         if (selectedSkin === 3 && unlockedSkins[3]) {
-            // Chico Invisible: teleport to nearest enemy and hit
+            // Chico Invisible: lanza un yunque pesado
             player.attacking = true;
             player.attackTimer = 15;
-            player.attackCooldown = 20;
-            sfxLaser();
-            let nearestEnemy = null;
-            let nearestDist = Infinity;
-            for (const e of level.enemies) {
-                if (e.dead) continue;
-                const dist = Math.sqrt((e.x - player.x) ** 2 + (e.y - player.y) ** 2);
-                if (dist < nearestDist) { nearestDist = dist; nearestEnemy = e; }
-            }
-            if (boss && boss.alive) {
-                const dist = Math.sqrt((boss.x - player.x) ** 2 + (boss.y - player.y) ** 2);
-                if (dist < nearestDist) { nearestDist = dist; nearestEnemy = boss; }
-            }
-            if (nearestEnemy && nearestDist < 600) {
-                spawnParticles(player.x + player.w/2, player.y + player.h/2, '#00ffff', 12, 4);
-                player.x = nearestEnemy.x + nearestEnemy.w/2 - player.w/2;
-                player.y = nearestEnemy.y - player.h;
-                player.facing = nearestEnemy.x > player.x ? 1 : -1;
-                spawnParticles(player.x + player.w/2, player.y + player.h/2, '#00ffff', 12, 4);
-                // Deal damage
-                if (nearestEnemy === boss) {
-                    if (boss.invincible <= 0) {
-                        boss.hp -= 2;
-                        boss.invincible = 20;
-                        sfxBossHit();
-                        shakeTimer = 6; shakeIntensity = 4;
-                        spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#ff0', 10, 5);
-                    }
-                } else {
-                    nearestEnemy.hp -= 2;
-                    sfxHit();
-                    spawnParticles(nearestEnemy.x + nearestEnemy.w/2, nearestEnemy.y + nearestEnemy.h/2, '#ff0', 8, 3);
-                }
-            }
+            player.attackCooldown = 25;
+            sfxAttack();
+            const isGiant = player.giantTimer > 0;
+            playerProjectiles.push({
+                x: player.x + (player.facing >= 0 ? player.w + 2 : -22),
+                y: player.y + player.h * 0.1,
+                vx: player.facing * 6,
+                vy: -3,
+                type: 'anvil',
+                life: 80,
+                damage: isGiant ? 5 : 3,
+                w: isGiant ? 32 : 22, h: isGiant ? 28 : 18,
+                rotation: 0
+            });
         } else {
             player.attacking = true;
             player.attackTimer = 15;
@@ -3506,7 +3486,7 @@ function updateEnemies() {
                 e.alive = false;
                 score += 100;
                 sfxBossHit();
-                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : '#FFD700', 8);
+                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'anvil' ? '#888' : '#FFD700', 8);
                 player.starPower = Math.min(player.maxStarPower, player.starPower + 10);
                 spawnDrop(e.x + e.w/2, e.y + e.h/2);
                 addCombo();
@@ -4008,7 +3988,7 @@ function updateBoss() {
             sfxBossHit();
             shakeTimer = 5;
             shakeIntensity = 3;
-            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : '#FFD700', 6);
+            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'anvil' ? '#888' : '#FFD700', 6);
             score += 50;
             screenFlash = { timer: 4, color: '#FFD700' };
             playerProjectiles.splice(pi, 1);
@@ -4061,8 +4041,12 @@ function updatePlayerProjectiles() {
         if (p.type === 'ninjaStar') {
             p.rotation = (p.rotation || 0) + 0.3;
         }
+        if (p.type === 'anvil') {
+            p.vy += 0.4; // gravity on anvil
+            p.rotation = (p.rotation || 0) + 0.15;
+        }
         p.life--;
-        if (p.life <= 0 || p.x < camera.x - 50 || p.x > camera.x + canvas.width + 50) {
+        if (p.life <= 0 || p.x < camera.x - 50 || p.x > camera.x + canvas.width + 50 || p.y > 550) {
             playerProjectiles.splice(i, 1);
         }
     }
@@ -4092,6 +4076,28 @@ function drawPlayerProjectiles() {
             drawStar(0, 0, 10, 4, 5);
             ctx.fillStyle = '#FFA000';
             drawStar(0, 0, 5, 2, 5);
+            ctx.restore();
+        } else if (p.type === 'anvil') {
+            // Heavy anvil projectile
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            const aw = p.w, ah = p.h;
+            // Base
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-aw/2, -ah*0.1, aw, ah*0.55);
+            // Top (narrower)
+            ctx.fillStyle = '#666';
+            ctx.fillRect(-aw*0.3, -ah*0.5, aw*0.6, ah*0.45);
+            // Horn on top
+            ctx.fillStyle = '#777';
+            ctx.fillRect(-aw*0.12, -ah*0.65, aw*0.24, ah*0.2);
+            // Feet (wider base)
+            ctx.fillStyle = '#444';
+            ctx.fillRect(-aw*0.6, ah*0.35, aw*1.2, ah*0.15);
+            // Shine
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(-aw*0.15, -ah*0.35, aw*0.12, ah*0.3);
             ctx.restore();
         }
     }
@@ -4286,6 +4292,17 @@ function drawTutorial() {
                 ctx.fillRect(-2, -8, 4, 16);
                 ctx.rotate(Math.PI/4);
             }
+            ctx.restore();
+        } else if (p.type === 'anvil') {
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-p.w/2, -p.h*0.1, p.w, p.h*0.55);
+            ctx.fillStyle = '#666';
+            ctx.fillRect(-p.w*0.3, -p.h*0.5, p.w*0.6, p.h*0.45);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(-p.w*0.6, p.h*0.35, p.w*1.2, p.h*0.15);
             ctx.restore();
         }
     }
