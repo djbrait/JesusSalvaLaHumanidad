@@ -122,9 +122,9 @@
     <div class="touch-btn" id="btn-left" style="display:none;">◀</div>
     <div class="touch-btn" id="btn-right" style="display:none;">▶</div>
     <div class="touch-btn" id="btn-jump" style="display:none;">⬆</div>
-    <div class="touch-btn" id="btn-dash" style="display:none;">💨</div>
-    <div class="touch-btn" id="btn-z" style="display:none;">⚡</div>
-    <div class="touch-btn" id="btn-x" style="display:none;">★</div>
+    <div class="touch-btn" id="btn-dash" style="display:none;">Mayús</div>
+    <div class="touch-btn" id="btn-z" style="display:none;">Z</div>
+    <div class="touch-btn" id="btn-x" style="display:none;">X</div>
     <div class="touch-btn" id="btn-pause" style="display:none;">❚❚</div>
     <div class="touch-btn" id="btn-bonus-up" style="display:none;">▲</div>
     <div class="touch-btn" id="btn-bonus-down" style="display:none;">▼</div>
@@ -301,19 +301,6 @@ window.addEventListener('focus', () => {
 const keys = {};
 const touchKeys = {};
 window.addEventListener('keydown', e => {
-    if (leaderboardPhase === 'enterName') {
-        e.preventDefault();
-        if (e.key === 'Backspace') {
-            enterNameText = enterNameText.slice(0, -1);
-        } else if (e.key === 'Enter' && enterNameText.trim().length > 0) {
-            confirmNameEntry();
-        } else if (e.key === 'Escape') {
-            skipNameEntry();
-        } else if (e.key.length === 1 && /[a-zA-Z0-9 ]/.test(e.key) && enterNameText.length < 10) {
-            enterNameText += e.key.toUpperCase();
-        }
-        return;
-    }
     keys[e.code] = true; e.preventDefault();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; e.preventDefault(); });
@@ -375,174 +362,7 @@ function saveMarketData() {
     localStorage.setItem('chicoEstrella_selectedSkin', selectedSkin);
     localStorage.setItem('chicoEstrella_unlockedSkins', JSON.stringify(unlockedSkins));
 }
-// ---- LEADERBOARD ----
-let leaderboard = [];
-try { leaderboard = JSON.parse(localStorage.getItem('chicoEstrella_leaderboard')) || []; } catch(e) { leaderboard = []; }
-let leaderboardPhase = 'none';
-let enterNameText = '';
-let enterNameSource = '';
-let lastLeaderboardIndex = -1;
-
-function getLeaderboard() {
-    try { return JSON.parse(localStorage.getItem('chicoEstrella_leaderboard')) || []; }
-    catch(e) { return []; }
-}
-
-function saveToLeaderboard(name, playerScore) {
-    const lb = getLeaderboard();
-    const entry = { name: name.substring(0, 10), score: playerScore };
-    lb.push(entry);
-    lb.sort((a, b) => b.score - a.score);
-    if (lb.length > 10) lb.length = 10;
-    lastLeaderboardIndex = lb.indexOf(entry);
-    localStorage.setItem('chicoEstrella_leaderboard', JSON.stringify(lb));
-    leaderboard = lb;
-}
-
-function scoreQualifiesForLeaderboard(playerScore) {
-    if (playerScore <= 0) return false;
-    const lb = getLeaderboard();
-    if (lb.length < 10) return true;
-    return playerScore > lb[lb.length - 1].score;
-}
-
-function confirmNameEntry() {
-    if (enterNameText.trim().length === 0) return;
-    saveToLeaderboard(enterNameText.trim(), score);
-    leaderboardPhase = 'showLeaderboard';
-}
-
-function skipNameEntry() {
-    lastLeaderboardIndex = -1;
-    leaderboard = getLeaderboard();
-    leaderboardPhase = 'showLeaderboard';
-}
-
-const NAME_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const NAME_CELL_W = 46;
-const NAME_CELL_H = 42;
-const NAME_GRID_COLS = 9;
-
-function getNameGridLayout() {
-    const rows = Math.ceil(NAME_CHARS.length / NAME_GRID_COLS);
-    const gridW = NAME_GRID_COLS * NAME_CELL_W;
-    const gridX = (canvas.width - gridW) / 2;
-    const gridY = canvas.height / 2 - 10;
-    return { gridX, gridY, gridW, rows };
-}
-
-function handleNameGridTouch(tx, ty) {
-    const { gridX, gridY, rows } = getNameGridLayout();
-    for (let i = 0; i < NAME_CHARS.length; i++) {
-        const col = i % NAME_GRID_COLS;
-        const row = Math.floor(i / NAME_GRID_COLS);
-        const x = gridX + col * NAME_CELL_W;
-        const y = gridY + row * NAME_CELL_H;
-        if (tx >= x && tx < x + NAME_CELL_W && ty >= y && ty < y + NAME_CELL_H) {
-            if (enterNameText.length < 10) enterNameText += NAME_CHARS[i];
-            return true;
-        }
-    }
-    const specialY = gridY + rows * NAME_CELL_H;
-    if (tx >= gridX && tx < gridX + NAME_CELL_W * 4 && ty >= specialY && ty < specialY + NAME_CELL_H) {
-        enterNameText = enterNameText.slice(0, -1);
-        return true;
-    }
-    const okX = gridX + NAME_CELL_W * 5;
-    if (tx >= okX && tx < okX + NAME_CELL_W * 4 && ty >= specialY && ty < specialY + NAME_CELL_H) {
-        confirmNameEntry();
-        return true;
-    }
-    return false;
-}
-
-function handleLeaderboardTouch(tx, ty) {
-    if (leaderboardPhase === 'enterName') {
-        handleNameGridTouch(tx, ty);
-    } else if (leaderboardPhase === 'showLeaderboard' || leaderboardPhase === 'done') {
-        keys['Enter'] = true;
-        setTimeout(() => keys['Enter'] = false, 100);
-    }
-}
-
-function drawNameEntryUI() {
-    const { gridX, gridY, rows } = getNameGridLayout();
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 22px Arial';
-    ctx.fillText('¡INGRESÁ TU NOMBRE!', canvas.width / 2, canvas.height / 2 - 80);
-    const cursor = Math.sin(Date.now() * 0.006) > 0 ? '▌' : '';
-    ctx.fillStyle = '#00d4ff';
-    ctx.font = 'bold 30px Arial';
-    ctx.fillText((enterNameText || '') + cursor, canvas.width / 2, canvas.height / 2 - 40);
-    for (let i = 0; i < NAME_CHARS.length; i++) {
-        const col = i % NAME_GRID_COLS;
-        const row = Math.floor(i / NAME_GRID_COLS);
-        const x = gridX + col * NAME_CELL_W;
-        const y = gridY + row * NAME_CELL_H;
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.fillRect(x + 2, y + 2, NAME_CELL_W - 4, NAME_CELL_H - 4);
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x + 2, y + 2, NAME_CELL_W - 4, NAME_CELL_H - 4);
-        ctx.fillStyle = '#fff';
-        ctx.font = '18px Arial';
-        ctx.fillText(NAME_CHARS[i], x + NAME_CELL_W / 2, y + NAME_CELL_H / 2 + 6);
-    }
-    const specialY = gridY + rows * NAME_CELL_H;
-    ctx.fillStyle = 'rgba(255,80,80,0.15)';
-    ctx.fillRect(gridX + 2, specialY + 2, NAME_CELL_W * 4 - 4, NAME_CELL_H - 4);
-    ctx.strokeStyle = '#ff5050';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(gridX + 2, specialY + 2, NAME_CELL_W * 4 - 4, NAME_CELL_H - 4);
-    ctx.fillStyle = '#ff5050';
-    ctx.font = 'bold 16px Arial';
-    ctx.fillText('BORRAR', gridX + NAME_CELL_W * 2, specialY + NAME_CELL_H / 2 + 6);
-    const okEnabled = enterNameText.trim().length > 0;
-    const okX = gridX + NAME_CELL_W * 5;
-    ctx.fillStyle = okEnabled ? 'rgba(80,255,80,0.15)' : 'rgba(100,100,100,0.08)';
-    ctx.fillRect(okX + 2, specialY + 2, NAME_CELL_W * 4 - 4, NAME_CELL_H - 4);
-    ctx.strokeStyle = okEnabled ? '#50ff50' : '#555';
-    ctx.strokeRect(okX + 2, specialY + 2, NAME_CELL_W * 4 - 4, NAME_CELL_H - 4);
-    ctx.fillStyle = okEnabled ? '#50ff50' : '#555';
-    ctx.font = 'bold 16px Arial';
-    ctx.fillText('ACEPTAR', okX + NAME_CELL_W * 2, specialY + NAME_CELL_H / 2 + 6);
-    ctx.fillStyle = '#888';
-    ctx.font = '13px Arial';
-    ctx.fillText('Tipeá con el teclado o tocá las letras', canvas.width / 2, canvas.height - 20);
-    ctx.textAlign = 'left';
-}
-
-function drawLeaderboardUI() {
-    const lb = leaderboard;
-    const startY = 140;
-    const lineH = 28;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 24px Arial';
-    ctx.fillText('🏆 TOP 10 PUNTAJES', canvas.width / 2, startY);
-    if (lb.length === 0) {
-        ctx.fillStyle = '#888';
-        ctx.font = '18px Arial';
-        ctx.fillText('No hay puntajes registrados', canvas.width / 2, startY + 50);
-    } else {
-        for (let i = 0; i < lb.length; i++) {
-            const y = startY + 35 + i * lineH;
-            const isNew = (i === lastLeaderboardIndex);
-            if (isNew) {
-                ctx.fillStyle = 'rgba(0,212,255,0.15)';
-                ctx.fillRect(canvas.width / 2 - 180, y - 18, 360, lineH);
-            }
-            ctx.fillStyle = isNew ? '#00d4ff' : (i < 3 ? '#FFD700' : '#ccc');
-            ctx.font = isNew ? 'bold 17px Arial' : '17px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(`${(i + 1).toString().padStart(2)}.  ${lb[i].name}`, canvas.width / 2 - 170, y);
-            ctx.textAlign = 'right';
-            ctx.fillText(`${lb[i].score}`, canvas.width / 2 + 170, y);
-        }
-    }
-    ctx.textAlign = 'left';
-}
+// ---- LEADERBOARD REMOVED ----
 
 let currentLevel = 0;
 let lives = 5;
@@ -583,7 +403,6 @@ function togglePause() {
     }
 }
 window.addEventListener('keydown', e => {
-    if (leaderboardPhase === 'enterName') return;
     if (e.code === 'KeyP') togglePause();
 });
 
@@ -931,7 +750,10 @@ function createPlayer() {
         // Wall jump
         wallSliding: false,
         wallDir: 0,
-        wallJumpCooldown: 0
+        wallJumpCooldown: 0,
+        // Chico Invisible
+        invisibleVisible: false,
+        invisibleToggleCooldown: 0
     };
 }
 
@@ -1554,8 +1376,200 @@ function drawChicoLuminoso(x, y, w, h, facing, animFrame, attacking, invincible,
     ctx.restore();
 }
 
+function drawChicoInvisibleVisible(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
+    if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
+    ctx.save();
+    ctx.translate(x + w/2, y + h/2);
+    if (facing < 0) ctx.scale(-1, 1);
+    const cx = -w/2, cy = -h/2;
+
+    // Cape (dark gray)
+    const capeWave = Math.sin(animFrame * 0.15) * 3;
+    ctx.fillStyle = '#666';
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.3, cy + h * 0.3);
+    ctx.quadraticCurveTo(cx - 8 + capeWave, cy + h * 0.6, cx - 5 + capeWave, cy + h * 0.85);
+    ctx.lineTo(cx + w * 0.2, cy + h * 0.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Body (gray suit)
+    ctx.fillStyle = '#aaa';
+    ctx.strokeStyle = '#777';
+    ctx.lineWidth = 2;
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.33, w * 0.6, h * 0.35);
+    ctx.strokeRect(cx + w * 0.2, cy + h * 0.33, w * 0.6, h * 0.35);
+
+    // Legs
+    const legSwing = isRunning ? Math.sin(animFrame * 0.35) * 12 : 0;
+    ctx.fillStyle = '#999';
+    ctx.strokeStyle = '#666';
+    ctx.save();
+    ctx.translate(cx + w * 0.33, cy + h * 0.65);
+    ctx.rotate(legSwing * Math.PI / 180 * 2);
+    ctx.fillRect(-w * 0.11, 0, w * 0.22, h * 0.22);
+    ctx.strokeRect(-w * 0.11, 0, w * 0.22, h * 0.22);
+    ctx.fillStyle = '#777';
+    ctx.fillRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
+    ctx.strokeRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(cx + w * 0.67, cy + h * 0.65);
+    ctx.rotate(-legSwing * Math.PI / 180 * 2);
+    ctx.fillStyle = '#999';
+    ctx.fillRect(-w * 0.11, 0, w * 0.22, h * 0.22);
+    ctx.strokeRect(-w * 0.11, 0, w * 0.22, h * 0.22);
+    ctx.fillStyle = '#777';
+    ctx.fillRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
+    ctx.strokeRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
+    ctx.restore();
+
+    // Belt
+    ctx.fillStyle = '#555';
+    ctx.fillRect(cx + w * 0.18, cy + h * 0.62, w * 0.64, h * 0.06);
+    ctx.strokeStyle = '#444';
+    ctx.strokeRect(cx + w * 0.18, cy + h * 0.62, w * 0.64, h * 0.06);
+    ctx.fillStyle = '#888';
+    ctx.fillRect(cx + w * 0.44, cy + h * 0.62, w * 0.12, h * 0.06);
+
+    // Head (skin color)
+    ctx.fillStyle = '#f0dcc0';
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy + h * 0.22, w * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Hair (brown, spiky)
+    ctx.fillStyle = '#8B4513';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.22, cy + h * 0.12);
+    ctx.lineTo(cx + w * 0.3, cy - h * 0.05);
+    ctx.lineTo(cx + w * 0.38, cy + h * 0.08);
+    ctx.lineTo(cx + w * 0.45, cy - h * 0.08);
+    ctx.lineTo(cx + w * 0.52, cy + h * 0.05);
+    ctx.lineTo(cx + w * 0.6, cy - h * 0.06);
+    ctx.lineTo(cx + w * 0.68, cy + h * 0.06);
+    ctx.lineTo(cx + w * 0.75, cy - h * 0.02);
+    ctx.lineTo(cx + w * 0.78, cy + h * 0.12);
+    ctx.arc(cx + w * 0.5, cy + h * 0.22, w * 0.28, -Math.PI * 0.85, -Math.PI * 0.15, false);
+    ctx.closePath();
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.4, cy + h * 0.2, w * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.6, cy + h * 0.2, w * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Smile
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy + h * 0.25, w * 0.1, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+
+    // Ears (pointed)
+    ctx.fillStyle = '#f0dcc0';
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.22, cy + h * 0.18);
+    ctx.lineTo(cx + w * 0.14, cy + h * 0.14);
+    ctx.lineTo(cx + w * 0.22, cy + h * 0.26);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.78, cy + h * 0.18);
+    ctx.lineTo(cx + w * 0.86, cy + h * 0.14);
+    ctx.lineTo(cx + w * 0.78, cy + h * 0.26);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Question mark on chest
+    ctx.fillStyle = '#ddd';
+    ctx.font = `bold ${Math.round(w * 0.35)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText('?', cx + w * 0.5, cy + h * 0.56);
+    ctx.textAlign = 'left';
+
+    // Arms
+    ctx.fillStyle = '#aaa';
+    ctx.strokeStyle = '#777';
+    ctx.lineWidth = 2;
+    const armSwing = attacking ? -30 : (isRunning ? Math.sin(animFrame * 0.35 + 1) * 15 : 0);
+    ctx.save();
+    ctx.translate(cx + w * 0.15, cy + h * 0.38);
+    ctx.rotate(armSwing * Math.PI / 180);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-w * 0.15, h * 0.25);
+    ctx.lineWidth = w * 0.12;
+    ctx.stroke();
+    ctx.fillStyle = '#ddb896';
+    ctx.beginPath();
+    ctx.arc(-w * 0.15, h * 0.25, w * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+    ctx.save();
+    ctx.translate(cx + w * 0.85, cy + h * 0.38);
+    ctx.rotate(-armSwing * Math.PI / 180);
+    ctx.strokeStyle = '#777';
+    ctx.lineWidth = w * 0.12;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(w * 0.15, h * 0.25);
+    ctx.stroke();
+    ctx.fillStyle = '#ddb896';
+    ctx.beginPath();
+    ctx.arc(w * 0.15, h * 0.25, w * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    // Cyan highlight lines
+    ctx.strokeStyle = 'rgba(0, 200, 255, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.8, cy + h * 0.33);
+    ctx.lineTo(cx + w * 0.8, cy + h * 0.95);
+    ctx.stroke();
+
+    // Attacking flash effect
+    if (attacking) {
+        ctx.globalAlpha = 0.4;
+        ctx.strokeStyle = '#888';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx + w * 0.5, cy + h * 0.5, w * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
+}
+
 function drawChicoInvisible(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
     if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
+    // If visible mode, draw solid visible version
+    if (player.invisibleVisible) {
+        drawChicoInvisibleVisible(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
+        return;
+    }
     ctx.save();
     ctx.translate(x + w/2, y + h/2);
     if (facing < 0) ctx.scale(-1, 1);
@@ -3080,7 +3094,7 @@ function drawUI() {
         ctx.fillRect(12, dashY + 2, 96 * (1 - player.dashCooldown / 45), 10);
         ctx.fillStyle = '#8df';
         ctx.font = '9px Arial';
-        ctx.fillText('⚡ DASH', 14, dashY + 10);
+        ctx.fillText('Mayús DASH', 14, dashY + 10);
     }
     
     // Boss health bar
@@ -3101,7 +3115,7 @@ function drawUI() {
     // Controls hint (hide on touch devices)
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.font = '10px Arial';
-    ctx.fillText('← → Mover | ESPACIO Saltar (x2) | SHIFT Dash | Z Rayo | X ★ Ninja | P Pausa', 10, canvas.height - 8);
+    ctx.fillText('← → Mover | ESPACIO Saltar (x2) | Mayús Dash | Z Rayo | X Estrella | P Pausa', 10, canvas.height - 8);
     
     // Progress bar (distance to boss)
     if (gameState === 'playing') {
@@ -3306,6 +3320,10 @@ function playerPlatformCollision() {
     }
 }
 
+function isChicoInvisibleAndHidden() {
+    return selectedSkin === 3 && unlockedSkins[3] && !player.invisibleVisible;
+}
+
 function damagePlayer(dmg) {
     if (player.invincible > 0 || player.dead) return;
     player.hp -= dmg;
@@ -3323,14 +3341,7 @@ function damagePlayer(dmg) {
             setTimeout(() => {
                 gameState = 'gameOver'; gameOverTimer = 0; stopMusic();
                 for (const k in keys) keys[k] = false;
-                if (scoreQualifiesForLeaderboard(score)) {
-                    leaderboardPhase = 'enterName';
-                    enterNameText = '';
-                } else {
-                    lastLeaderboardIndex = -1;
-                    leaderboard = getLeaderboard();
-                    leaderboardPhase = 'showLeaderboard';
-                }
+                // Go directly to game over options
             }, 1000);
         } else {
             setTimeout(() => {
@@ -3543,21 +3554,22 @@ function updatePlayer() {
     if (player.attackCooldown > 0) player.attackCooldown--;
     if ((isKeyDown('KeyZ') || isKeyDown('KeyJ')) && player.attackCooldown === 0) {
         if (selectedSkin === 3 && unlockedSkins[3]) {
-            // Chico Invisible: lanza un yunque pesado
+            // Chico Invisible: lanza martillos dirigidos al enemigo más cercano
             player.attacking = true;
             player.attackTimer = 15;
-            player.attackCooldown = 25;
+            player.attackCooldown = 20;
             sfxAttack();
             const isGiant = player.giantTimer > 0;
+            const aimHammer = findNearestTarget();
             playerProjectiles.push({
-                x: player.x + (player.facing >= 0 ? player.w + 2 : -22),
+                x: player.x + (aimHammer.dx >= 0 ? player.w + 2 : -22),
                 y: player.y + player.h * 0.1,
-                vx: player.facing * 6,
-                vy: -3,
-                type: 'anvil',
-                life: 80,
-                damage: isGiant ? 5 : 3,
-                w: isGiant ? 32 : 22, h: isGiant ? 28 : 18,
+                vx: aimHammer.dx * 8,
+                vy: aimHammer.dy * 8,
+                type: 'hammer',
+                life: 60,
+                damage: isGiant ? 4 : 2,
+                w: isGiant ? 28 : 20, h: isGiant ? 28 : 20,
                 rotation: 0
             });
         } else {
@@ -3584,35 +3596,43 @@ function updatePlayer() {
         if (player.attackTimer === 0) player.attacking = false;
     }
     
-    // X Attack: Ninja star / Chico Invisible: gran salto hacia adelante
-    if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.starPower >= 20 && player.attackCooldown === 0) {
-        if (selectedSkin === 3 && unlockedSkins[3]) {
-            // Chico Invisible: gran salto hacia adelante
-            player.starPower -= 20;
-            player.attackCooldown = 15;
-            sfxJump();
-            player.vx = player.facing * 14;
-            player.vy = -8;
-            player.onGround = false;
-            spawnParticles(player.x + player.w/2, player.y + player.h, '#00ffff', 10, 4);
+    // X Attack: Ninja star / Chico Invisible: alternar visibilidad
+    if (player.invisibleToggleCooldown > 0) player.invisibleToggleCooldown--;
+    if (selectedSkin === 3 && unlockedSkins[3]) {
+        // Chico Invisible: X alterna visibilidad
+        if ((isKeyDown('KeyX') || isKeyDown('KeyK'))) {
+            if (!player._xTogglePressed) {
+                player._xTogglePressed = true;
+                player.invisibleVisible = !player.invisibleVisible;
+                player.invisibleToggleCooldown = 20;
+                if (player.invisibleVisible) {
+                    spawnParticles(player.x + player.w/2, player.y + player.h/2, '#888888', 10, 3);
+                    playSound(500, 0.15, 'square', 0.1);
+                } else {
+                    spawnParticles(player.x + player.w/2, player.y + player.h/2, '#00ffff', 10, 3);
+                    playSound(300, 0.15, 'triangle', 0.1);
+                }
+            }
         } else {
-            player.starPower -= 20;
-            player.attackCooldown = 6;
-            sfxNinjaStar();
-            const isGiant2 = player.giantTimer > 0;
-            const aim2 = findNearestTarget();
-            playerProjectiles.push({
-                x: player.x + (aim2.dx >= 0 ? player.w : -10),
-                y: player.y + player.h * 0.35,
-                vx: aim2.dx * 7,
-                vy: aim2.dy * 7,
-                type: 'ninjaStar',
-                life: 60,
-                damage: isGiant2 ? 4 : 2,
-                w: isGiant2 ? 24 : 16, h: isGiant2 ? 24 : 16,
-                rotation: 0
-            });
+            player._xTogglePressed = false;
         }
+    } else if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.starPower >= 20 && player.attackCooldown === 0) {
+        player.starPower -= 20;
+        player.attackCooldown = 6;
+        sfxNinjaStar();
+        const isGiant2 = player.giantTimer > 0;
+        const aim2 = findNearestTarget();
+        playerProjectiles.push({
+            x: player.x + (aim2.dx >= 0 ? player.w : -10),
+            y: player.y + player.h * 0.35,
+            vx: aim2.dx * 7,
+            vy: aim2.dy * 7,
+            type: 'ninjaStar',
+            life: 60,
+            damage: isGiant2 ? 4 : 2,
+            w: isGiant2 ? 24 : 16, h: isGiant2 ? 24 : 16,
+            rotation: 0
+        });
     }
     
     // Gravity
@@ -3678,11 +3698,11 @@ function updateEnemies() {
         // Player projectile hits enemy
         for (let pi = playerProjectiles.length - 1; pi >= 0; pi--) {
             const p = playerProjectiles[pi];
-            if (rectCollision({x:p.x,y:p.y,w:p.w,h:p.h}, e)) {
+            if (!isChicoInvisibleAndHidden() && rectCollision({x:p.x,y:p.y,w:p.w,h:p.h}, e)) {
                 e.alive = false;
                 score += 100;
                 sfxBossHit();
-                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'anvil' ? '#888' : '#FFD700', 8);
+                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : '#FFD700', 8);
                 player.starPower = Math.min(player.maxStarPower, player.starPower + 10);
                 spawnDrop(e.x + e.w/2, e.y + e.h/2);
                 addCombo();
@@ -3696,16 +3716,22 @@ function updateEnemies() {
         if (rectCollision(player, e)) {
             // Jump on top = kill
             if (player.vy > 0 && player.y + player.h < e.y + e.h * 0.5) {
-                e.alive = false;
-                player.vy = -8;
-                score += 100;
-                sfxCoin();
-                spawnParticles(e.x + e.w/2, e.y + e.h/2, '#FFD700', 6);
-                player.starPower = Math.min(player.maxStarPower, player.starPower + 10);
-                spawnDrop(e.x + e.w/2, e.y + e.h/2);
-                addCombo();
+                if (!isChicoInvisibleAndHidden()) {
+                    e.alive = false;
+                    player.vy = -8;
+                    score += 100;
+                    sfxCoin();
+                    spawnParticles(e.x + e.w/2, e.y + e.h/2, '#FFD700', 6);
+                    player.starPower = Math.min(player.maxStarPower, player.starPower + 10);
+                    spawnDrop(e.x + e.w/2, e.y + e.h/2);
+                    addCombo();
+                } else {
+                    player.vy = -8;
+                }
             } else {
-                damagePlayer(1);
+                if (!isChicoInvisibleAndHidden()) {
+                    damagePlayer(1);
+                }
             }
         }
     }
@@ -3980,7 +4006,7 @@ function updateBoss() {
         // Body slam damage when close (but NOT if player is above = jumping on)
         if (rectCollision(player, {x: boss.x, y: boss.y, w: boss.w, h: boss.h})) {
             if (!(player.vy > 0 && player.y + player.h < boss.y + boss.h * 0.5)) {
-                damagePlayer(1);
+                if (!isChicoInvisibleAndHidden()) damagePlayer(1);
             }
         }
     } else if (boss.type === 'cambiaformas') {
@@ -4011,7 +4037,7 @@ function updateBoss() {
         // Body collision (not when jumping on top)
         if (rectCollision(player, {x: boss.x, y: boss.y, w: boss.w, h: boss.h})) {
             if (!(player.vy > 0 && player.y + player.h < boss.y + boss.h * 0.5)) {
-                damagePlayer(1);
+                if (!isChicoInvisibleAndHidden()) damagePlayer(1);
             }
         }
     } else if (boss.type === 'monstruocama') {
@@ -4059,7 +4085,7 @@ function updateBoss() {
         // Body collision
         if (rectCollision(player, {x: boss.x, y: boss.y, w: boss.w, h: boss.h})) {
             if (!(player.vy > 0 && player.y + player.h < boss.y + boss.h * 0.5)) {
-                damagePlayer(1);
+                if (!isChicoInvisibleAndHidden()) damagePlayer(1);
             }
         }
     } else if (boss.type === 'maelado') {
@@ -4142,7 +4168,7 @@ function updateBoss() {
         // Body collision
         if (rectCollision(player, {x: boss.x, y: boss.y, w: boss.w, h: boss.h})) {
             if (!(player.vy > 0 && player.y + player.h < boss.y + boss.h * 0.5)) {
-                damagePlayer(1);
+                if (!isChicoInvisibleAndHidden()) damagePlayer(1);
             }
         }
     }
@@ -4165,7 +4191,7 @@ function updateBoss() {
             continue;
         }
         // Hit player
-        if (!player.dead && rectCollision({x:p.x-6,y:p.y-6,w:12,h:12}, player)) {
+        if (!player.dead && !isChicoInvisibleAndHidden() && rectCollision({x:p.x-6,y:p.y-6,w:12,h:12}, player)) {
             damagePlayer(1);
             boss.projectiles.splice(i, 1);
         }
@@ -4178,13 +4204,13 @@ function updateBoss() {
     // Player projectiles hit boss
     for (let pi = playerProjectiles.length - 1; pi >= 0; pi--) {
         const p = playerProjectiles[pi];
-        if (boss.invincible === 0 && rectCollision({x:p.x,y:p.y,w:p.w,h:p.h}, {x:boss.x,y:boss.y,w:boss.w,h:boss.h})) {
+        if (!isChicoInvisibleAndHidden() && boss.invincible === 0 && rectCollision({x:p.x,y:p.y,w:p.w,h:p.h}, {x:boss.x,y:boss.y,w:boss.w,h:boss.h})) {
             boss.hp -= p.damage;
             boss.invincible = 15;
             sfxBossHit();
             shakeTimer = 5;
             shakeIntensity = 3;
-            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'anvil' ? '#888' : '#FFD700', 6);
+            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : '#FFD700', 6);
             score += 50;
             screenFlash = { timer: 4, color: '#FFD700' };
             playerProjectiles.splice(pi, 1);
@@ -4204,7 +4230,7 @@ function updateBoss() {
     }
     
     // Jump on boss
-    if (!player.dead && player.vy > 0 && rectCollision(player, {x:boss.x,y:boss.y,w:boss.w,h:boss.h})) {
+    if (!player.dead && !isChicoInvisibleAndHidden() && player.vy > 0 && rectCollision(player, {x:boss.x,y:boss.y,w:boss.w,h:boss.h})) {
         if (player.y + player.h < boss.y + boss.h * 0.4 && boss.invincible === 0) {
             boss.hp -= 1;
             boss.invincible = 20;
@@ -4237,9 +4263,8 @@ function updatePlayerProjectiles() {
         if (p.type === 'ninjaStar') {
             p.rotation = (p.rotation || 0) + 0.3;
         }
-        if (p.type === 'anvil') {
-            p.vy += 0.4; // gravity on anvil
-            p.rotation = (p.rotation || 0) + 0.15;
+        if (p.type === 'hammer') {
+            p.rotation = (p.rotation || 0) + 0.25;
         }
         p.life--;
         if (p.life <= 0 || p.x < camera.x - 50 || p.x > camera.x + canvas.width + 50 || p.y > 550) {
@@ -4273,27 +4298,21 @@ function drawPlayerProjectiles() {
             ctx.fillStyle = '#FFA000';
             drawStar(0, 0, 5, 2, 5);
             ctx.restore();
-        } else if (p.type === 'anvil') {
-            // Heavy anvil projectile
+        } else if (p.type === 'hammer') {
+            // Spinning hammer projectile
             ctx.save();
             ctx.translate(sx + p.w/2, p.y + p.h/2);
             ctx.rotate(p.rotation);
-            const aw = p.w, ah = p.h;
-            // Base
-            ctx.fillStyle = '#555';
-            ctx.fillRect(-aw/2, -ah*0.1, aw, ah*0.55);
-            // Top (narrower)
-            ctx.fillStyle = '#666';
-            ctx.fillRect(-aw*0.3, -ah*0.5, aw*0.6, ah*0.45);
-            // Horn on top
-            ctx.fillStyle = '#777';
-            ctx.fillRect(-aw*0.12, -ah*0.65, aw*0.24, ah*0.2);
-            // Feet (wider base)
-            ctx.fillStyle = '#444';
-            ctx.fillRect(-aw*0.6, ah*0.35, aw*1.2, ah*0.15);
+            const hw = p.w, hh = p.h;
+            // Handle (brown)
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-hw*0.08, -hh*0.05, hw*0.16, hh*0.55);
+            // Head (gray)
+            ctx.fillStyle = '#888';
+            ctx.fillRect(-hw*0.35, -hh*0.5, hw*0.7, hh*0.35);
             // Shine
             ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.fillRect(-aw*0.15, -ah*0.35, aw*0.12, ah*0.3);
+            ctx.fillRect(-hw*0.2, -hh*0.45, hw*0.15, hh*0.2);
             ctx.restore();
         }
     }
@@ -4379,9 +4398,9 @@ function startTutorial() {
         { x: 450,  text: '↑ FLECHA ARRIBA / ESPACIO\n   ¡Saltar!\n   Tocá una vez para saltar', icon: '⬆' },
         { x: 700,  text: '↑ o ESPACIO (2 veces)\n   ¡Salto doble!\n   Saltá y volvé a saltar en el aire', icon: '🔄' },
         { x: 950,  text: '↑ / ESPACIO + ← / →\n   Saltar y moverse en el aire\n   ¡Probá saltar entre plataformas!', icon: '🌀' },
-        { x: 1350, text: 'MAYÚS / 💨\n   Volar muy rápido por 1 segundo\n   ¡Probalo!', icon: '💨' },
-        { x: 1600, text: 'Z / ⚡\n   Lanzar rayo verde por los ojos\n   ¡Apuntá al frente!', icon: '⚡' },
-        { x: 1850, text: 'X / ESTRELLA\n   Lanzar estrellas ninja\n   ¡Giratorias y poderosas!', icon: '⭐' },
+        { x: 1350, text: 'Mayús\n   Volar muy rápido por 1 segundo\n   ¡Probalo!', icon: 'Mayús' },
+        { x: 1600, text: 'Z\n   Lanzar rayo verde por los ojos\n   ¡Apuntá al frente!', icon: 'Z' },
+        { x: 1850, text: 'X\n   Lanzar estrellas ninja\n   ¡Giratorias y poderosas!', icon: 'X' },
         { x: 2100, text: 'PARED + ↑\n   ¡Salto de pared!\n   Deslizate y saltá entre paredes', icon: '🧱' },
         { x: 2550, text: 'ANILLO LAPISLÁZULI →\n   ¡Te hace GIGANTE!\n   Tocá el anillo azul', icon: '💎' },
         { x: 2900, text: 'ANILLO ESPIRAL →\n   ¡Podés VOLAR!\n   Tocá el anillo violeta', icon: '🌀' },
@@ -4489,16 +4508,14 @@ function drawTutorial() {
                 ctx.rotate(Math.PI/4);
             }
             ctx.restore();
-        } else if (p.type === 'anvil') {
+        } else if (p.type === 'hammer') {
             ctx.save();
             ctx.translate(sx + p.w/2, p.y + p.h/2);
             ctx.rotate(p.rotation);
-            ctx.fillStyle = '#555';
-            ctx.fillRect(-p.w/2, -p.h*0.1, p.w, p.h*0.55);
-            ctx.fillStyle = '#666';
-            ctx.fillRect(-p.w*0.3, -p.h*0.5, p.w*0.6, p.h*0.45);
-            ctx.fillStyle = '#444';
-            ctx.fillRect(-p.w*0.6, p.h*0.35, p.w*1.2, p.h*0.15);
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(-p.w*0.08, -p.h*0.05, p.w*0.16, p.h*0.55);
+            ctx.fillStyle = '#888';
+            ctx.fillRect(-p.w*0.35, -p.h*0.5, p.w*0.7, p.h*0.35);
             ctx.restore();
         }
     }
@@ -5058,7 +5075,6 @@ function drawTitleScreen() {
             currentLevel = 0;
             lives = MAX_LIVES;
             score = 0;
-            leaderboardPhase = 'none';
             savedCheckpoint = { level: 0, score: 0, x: 80 };
             fadeOut(() => {
                 gameState = 'story';
@@ -5565,7 +5581,7 @@ function drawPauseScreen() {
     
     ctx.fillStyle = '#aaa';
     ctx.font = '13px Arial';
-    ctx.fillText('Z = Rayo Ocular  |  X = Estrella Ninja  |  SHIFT = Dash  |  ESPACIO = Saltar (x2)', canvas.width/2, startY + 4 * gap + 20);
+    ctx.fillText('Z = Rayo  |  X = Estrella  |  Mayús = Dash  |  ESPACIO = Saltar (x2)', canvas.width/2, startY + 4 * gap + 20);
     
     ctx.textAlign = 'left';
     
@@ -5661,23 +5677,7 @@ function drawGameOverScreen() {
     ctx.font = '20px Arial';
     ctx.fillText(`Puntos: ${score}`, canvas.width/2, 105);
     
-    if (leaderboardPhase === 'enterName') {
-        drawNameEntryUI();
-    } else if (leaderboardPhase === 'showLeaderboard') {
-        drawLeaderboardUI();
-        const blink = Math.sin(Date.now() * 0.005) > 0;
-        if (blink) {
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#FFD700';
-            ctx.font = '16px Arial';
-            ctx.fillText('Presioná ENTER o tocá para continuar', canvas.width/2, canvas.height - 25);
-        }
-        if (keys['Enter']) {
-            keys['Enter'] = false;
-            leaderboardPhase = 'done';
-            gameOverTimer = 61;
-        }
-    } else if (gameOverTimer > 60) {
+    if (gameOverTimer > 60) {
         const blink = Math.sin(Date.now() * 0.005) > 0;
         
         // Continue option
@@ -5694,7 +5694,6 @@ function drawGameOverScreen() {
             keys['Enter'] = false;
             lives = MAX_LIVES;
             score = savedCheckpoint.score;
-            leaderboardPhase = 'none';
             fadeOut(() => {
                 startLevel(savedCheckpoint.level);
                 fadeIn();
@@ -5706,7 +5705,6 @@ function drawGameOverScreen() {
             score = 0;
             currentLevel = 0;
             storyIndex = 0;
-            leaderboardPhase = 'none';
             fadeOut(() => {
                 gameState = 'story';
                 fadeIn();
@@ -5785,14 +5783,7 @@ function updateBonus() {
             fadeOut(() => {
                 gameState = 'victory';
                 for (const k in keys) keys[k] = false;
-                if (scoreQualifiesForLeaderboard(score)) {
-                    leaderboardPhase = 'enterName';
-                    enterNameText = '';
-                } else {
-                    lastLeaderboardIndex = -1;
-                    leaderboard = getLeaderboard();
-                    leaderboardPhase = 'showLeaderboard';
-                }
+                // Go directly to victory screen
                 fadeIn();
             });
         } else {
@@ -5910,22 +5901,7 @@ function drawVictoryScreen() {
     ctx.font = '20px Arial';
     ctx.fillText(`Puntuación Final: ${score}`, canvas.width/2, 100);
     
-    if (leaderboardPhase === 'enterName') {
-        drawNameEntryUI();
-    } else if (leaderboardPhase === 'showLeaderboard') {
-        drawLeaderboardUI();
-        const blink = Math.sin(t * 4) > 0;
-        if (blink) {
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#FFD700';
-            ctx.font = '16px Arial';
-            ctx.fillText('Presioná ENTER o tocá para continuar', canvas.width/2, canvas.height - 25);
-        }
-        if (keys['Enter']) {
-            keys['Enter'] = false;
-            leaderboardPhase = 'done';
-        }
-    } else {
+    {
         // Normal victory celebration
         drawPlayerCharacter(canvas.width/2 - 40, canvas.height/2 - 20, 80, 120, 1, t * 15, false, 0);
         
@@ -5952,7 +5928,6 @@ function drawVictoryScreen() {
         
         if (keys['Enter']) {
             keys['Enter'] = false;
-            leaderboardPhase = 'none';
             fadeOut(() => {
                 gameState = 'title';
                 fadeIn();
@@ -6043,9 +6018,13 @@ canvas.addEventListener('touchstart', (e) => {
         keys['Enter'] = true;
         setTimeout(() => keys['Enter'] = false, 100);
     } else if (gameState === 'gameOver') {
-        handleLeaderboardTouch(tx, ty);
+        if (gameOverTimer > 60) {
+            keys['Enter'] = true;
+            setTimeout(() => keys['Enter'] = false, 100);
+        }
     } else if (gameState === 'victory') {
-        handleLeaderboardTouch(tx, ty);
+        keys['Enter'] = true;
+        setTimeout(() => keys['Enter'] = false, 100);
     }
 }, {passive: false});
 
@@ -6122,8 +6101,14 @@ canvas.addEventListener('click', (e) => {
                 return;
             }
         }
-    } else if (gameState === 'gameOver' || gameState === 'victory') {
-        handleLeaderboardTouch(tx, ty);
+    } else if (gameState === 'gameOver') {
+        if (gameOverTimer > 60) {
+            keys['Enter'] = true;
+            setTimeout(() => keys['Enter'] = false, 100);
+        }
+    } else if (gameState === 'victory') {
+        keys['Enter'] = true;
+        setTimeout(() => keys['Enter'] = false, 100);
     }
 });
 
@@ -6214,7 +6199,7 @@ function resizeCanvas() {
         }
         setBtnStyle(left, {width:`${btnSize}px`,height:`${btnSize}px`,bottom:`${pad}px`,left:`${pad}px`,right:'',fontSize:`${btnSize*0.4}px`,color:'#fff',marginLeft:''});
         setBtnStyle(right, {width:`${btnSize}px`,height:`${btnSize}px`,bottom:`${pad}px`,left:`${pad + btnSize + 10}px`,right:'',fontSize:`${btnSize*0.4}px`,color:'#fff',marginLeft:''});
-        setBtnStyle(dash, {width:`${smallBtn}px`,height:`${smallBtn}px`,bottom:`${pad + btnSize + 10}px`,left:`${pad}px`,right:'',fontSize:`${smallBtn*0.35}px`,color:'#00d4ff',marginLeft:''});
+        setBtnStyle(dash, {width:`${smallBtn}px`,height:`${smallBtn}px`,bottom:`${pad + btnSize + 10}px`,left:`${pad}px`,right:'',fontSize:`${smallBtn*0.25}px`,color:'#00d4ff',marginLeft:''});
         
         // Action buttons right side
         setBtnStyle(jump, {width:`${jumpBtn}px`,height:`${jumpBtn}px`,bottom:`${pad + smallBtn + 10}px`,right:`${pad}px`,left:'',fontSize:`${jumpBtn*0.32}px`,color:'#ff4444',marginLeft:''});
