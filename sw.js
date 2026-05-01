@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chico-estrella-v8';
+const CACHE_NAME = 'chico-estrella-v9';
 const ASSETS = [
   './',
   './index.html',
