@@ -339,6 +339,9 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
+// ---- VERSION ----
+const GAME_VERSION = 'v1';
+
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
 let previousState = 'playing';
@@ -6690,9 +6693,16 @@ function draw() {
         ctx.fillRect(-10, -10, canvas.width + 20, canvas.height + 20);
     }
 
+    // Version number (always visible top-right)
+    ctx.save();
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillText(GAME_VERSION, canvas.width - 6, 14);
+    ctx.restore();
+
     // Secret code feedback
-    if (secretCodeTimer > 0) {
-        secretCodeTimer--;
+    if (secretCodeTimer > 0) {secretCodeTimer--;
         const alpha = Math.min(1, secretCodeTimer / 20);
         ctx.save();
         ctx.globalAlpha = alpha;
@@ -7988,8 +7998,36 @@ canvas.addEventListener('touchstart', (e) => {
     const scaleY = canvas.height / rect.height;
     const tx = (e.touches[0].clientX - rect.left) * scaleX;
     const ty = (e.touches[0].clientY - rect.top) * scaleY;
-    
+
+    // Level picker overlay takes priority
+    if (levelPickerOpen) {
+        for (const btn of levelPickerButtons) {
+            if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
+                if (btn.level === -1) {
+                    levelPickerOpen = false;
+                } else {
+                    openLevelPicker(btn.level);
+                }
+                return;
+            }
+        }
+        levelPickerOpen = false;
+        return;
+    }
+
     if (gameState === 'title') {
+        // 5 rapid taps on title/logo area opens level picker
+        if (ty < 295) {
+            const now = Date.now();
+            if (now - titleTapLastTime > 700) titleTapCount = 0;
+            titleTapLastTime = now;
+            titleTapCount++;
+            if (titleTapCount >= 5) {
+                titleTapCount = 0;
+                levelPickerOpen = true;
+            }
+            return;
+        }
         for (const btn of titleButtons) {
             if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
                 if (btn.action === 'play') titleSelection = 0;
