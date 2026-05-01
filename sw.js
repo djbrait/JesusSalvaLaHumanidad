@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chico-estrella-v19';
+const CACHE_NAME = 'chico-estrella-v20';
 const ASSETS = [
   './',
   './index.html',

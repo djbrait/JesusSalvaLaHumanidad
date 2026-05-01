@@ -5788,52 +5788,47 @@ function updateBoss() {
             }
         }
     } else if (boss.type === 'chicoopaco') {
-        // Fast, aggressive, teleports
-        const dist = player.x - boss.x;
+        // Move toward player, clamped to boss arena
+        const bossLeft = level.bossZone;
+        const bossRight = level.bossZone + 680 - boss.w;
+        const dist = player.x - (boss.x + boss.w / 2);
         boss.x += Math.sign(dist) * boss.vx * speedMult;
-        
-        // Teleport
-        if (!boss.teleportTimer) boss.teleportTimer = 0;
-        boss.teleportTimer++;
-        if (boss.teleportTimer > 140 - boss.phase * 20) {
-            boss.teleportTimer = 0;
-            boss.x = player.x + (Math.random() > 0.5 ? 150 : -150);
-            if (boss.x < bossArenaLeft) boss.x = bossArenaLeft + 50;
-            if (boss.x > bossArenaRight - boss.w) boss.x = bossArenaRight - boss.w - 50;
-            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#E040FB', 6, 3);
-        }
-        
+        boss.x = Math.max(bossLeft, Math.min(boss.x, bossRight));
+
         boss.attackTimer++;
-        const cd = Math.max(30, boss.attackCooldown - boss.phase * 8);
+        const cd = Math.max(35, boss.attackCooldown - boss.phase * 10);
         if (boss.attackTimer >= cd) {
             boss.attackTimer = 0;
-            const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
-            // Dark energy blast
+            const angle = Math.atan2(
+                (player.y + player.h / 2) - (boss.y + boss.h / 2),
+                (player.x + player.w / 2) - (boss.x + boss.w / 2)
+            );
+            // Phase 0: aimed shot
             boss.projectiles.push({
-                x: boss.x + boss.w/2, y: boss.y + boss.h/2,
+                x: boss.x + boss.w / 2, y: boss.y + boss.h / 2,
                 vx: Math.cos(angle) * 5, vy: Math.sin(angle) * 5,
                 type: 'darkenergy', life: 60
             });
             if (boss.phase >= 1) {
-                // Single void zone
-                boss.projectiles.push({
-                    x: player.x, y: player.y - 50,
-                    vx: 0, vy: 1.5,
-                    type: 'voidzone', life: 70
-                });
-            }
-            if (boss.phase >= 2) {
-                // Dark pulse - 5-way burst (less than before)
-                for (let i = 0; i < 5; i++) {
-                    const a = (Math.PI * 2 / 5) * i;
+                // Phase 1: 3-way spread
+                for (let i = -1; i <= 1; i++) {
+                    const a = angle + i * 0.45;
                     boss.projectiles.push({
-                        x: boss.x + boss.w/2, y: boss.y + boss.h/2,
+                        x: boss.x + boss.w / 2, y: boss.y + boss.h / 2,
                         vx: Math.cos(a) * 4, vy: Math.sin(a) * 4,
-                        type: 'darkpulse', life: 40
+                        type: 'darkpulse', life: 45
                     });
                 }
-                shakeTimer = 10;
-                shakeIntensity = 5;
+            }
+            if (boss.phase >= 2) {
+                // Phase 2: void zone drop on player
+                boss.projectiles.push({
+                    x: player.x + player.w / 2, y: player.y - 60,
+                    vx: 0, vy: 1.8,
+                    type: 'voidzone', life: 65
+                });
+                shakeTimer = 8;
+                shakeIntensity = 4;
             }
         }
         // Body collision
@@ -8226,20 +8221,33 @@ resizeCanvas();
 const FIXED_DT = 1000 / 60; // 16.67ms per logic tick (60fps target)
 let lastTime = 0;
 let accumulator = 0;
+let _errShown = false;
 
 function gameLoop(timestamp) {
-    if (lastTime === 0) lastTime = timestamp;
-    let elapsed = timestamp - lastTime;
-    lastTime = timestamp;
-    // Clamp large gaps (e.g. tab switch) to avoid spiral of death
-    if (elapsed > 200) elapsed = 200;
-    accumulator += elapsed;
+    try {
+        if (lastTime === 0) lastTime = timestamp;
+        let elapsed = timestamp - lastTime;
+        lastTime = timestamp;
+        // Clamp large gaps (e.g. tab switch) to avoid spiral of death
+        if (elapsed > 200) elapsed = 200;
+        accumulator += elapsed;
 
-    while (accumulator >= FIXED_DT) {
-        update();
-        accumulator -= FIXED_DT;
+        while (accumulator >= FIXED_DT) {
+            update();
+            accumulator -= FIXED_DT;
+        }
+        draw();
+    } catch(err) {
+        if (!_errShown) {
+            _errShown = true;
+            console.error('💥 GameLoop error:', err.message, err.stack);
+            // Show on screen so it's visible even without devtools
+            const div = document.createElement('div');
+            div.style = 'position:fixed;top:0;left:0;background:#f00;color:#fff;font:14px monospace;padding:10px;z-index:9999;max-width:100vw;word-break:break-all;';
+            div.textContent = 'ERROR: ' + err.message + '\n' + (err.stack || '');
+            document.body.appendChild(div);
+        }
     }
-    draw();
     requestAnimationFrame(gameLoop);
 }
 
