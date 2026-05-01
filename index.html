@@ -1568,7 +1568,7 @@ function drawChicoInvisibleVisible(x, y, w, h, facing, animFrame, attacking, inv
 function drawChicoInvisible(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
     if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
     // If visible mode, draw solid visible version
-    if (player.invisibleVisible) {
+    if (player && player.invisibleVisible) {
         drawChicoInvisibleVisible(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
         return;
     }
