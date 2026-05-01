@@ -1138,9 +1138,20 @@ function drawChicaFugaz(x, y, w, h, facing, animFrame, attacking, invincible, is
     ctx.arc(cx + w * 0.5, cy + h * 0.65, 5, 0, Math.PI * 2);
     ctx.fill();
 
-    // White star on chest
+    // Sparkle/diamond 4-pointed star on chest
     ctx.fillStyle = starColor;
-    drawStar(cx + w * 0.5, cy + h * 0.46, 10, 5, 5);
+    ctx.beginPath();
+    const scx = cx + w * 0.5, scy = cy + h * 0.46;
+    ctx.moveTo(scx, scy - 9);
+    ctx.lineTo(scx + 3, scy - 3);
+    ctx.lineTo(scx + 9, scy);
+    ctx.lineTo(scx + 3, scy + 3);
+    ctx.lineTo(scx, scy + 9);
+    ctx.lineTo(scx - 3, scy + 3);
+    ctx.lineTo(scx - 9, scy);
+    ctx.lineTo(scx - 3, scy - 3);
+    ctx.closePath();
+    ctx.fill();
 
     // Arms
     ctx.fillStyle = suitColor;
