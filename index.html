@@ -6143,6 +6143,7 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke) {
 
 let titleButtons = [];
 let settingsButtons = [];
+let gameOverButtons = [];
 
 function drawSettingsScreen() {
     // Garage background
@@ -6699,16 +6700,23 @@ function drawGameOverScreen() {
     
     if (gameOverTimer > 60) {
         const blink = Math.sin(Date.now() * 0.005) > 0;
+        gameOverButtons = [];
         
         // Continue option
+        const contW = 400, contH = 35;
+        const contX = canvas.width/2 - contW/2, contY = canvas.height/2 + 22;
         ctx.fillStyle = blink ? '#00d4ff' : '#0099bb';
         ctx.font = 'bold 20px Arial';
-        ctx.fillText('[ ENTER ] Continuar desde el checkpoint', canvas.width/2, canvas.height/2 + 40);
+        ctx.fillText('Continuar desde el checkpoint', canvas.width/2, canvas.height/2 + 40);
+        gameOverButtons.push({ x: contX, y: contY, w: contW, h: contH, action: 'continue' });
         
         // Restart option
+        const restW = 400, restH = 35;
+        const restX = canvas.width/2 - restW/2, restY = canvas.height/2 + 62;
         ctx.fillStyle = blink ? '#FFD700' : '#aa8800';
         ctx.font = 'bold 20px Arial';
-        ctx.fillText('[ R ] Reiniciar desde el principio', canvas.width/2, canvas.height/2 + 80);
+        ctx.fillText('Reiniciar desde el principio', canvas.width/2, canvas.height/2 + 80);
+        gameOverButtons.push({ x: restX, y: restY, w: restW, h: restH, action: 'restart' });
         
         if (keys['Enter']) {
             keys['Enter'] = false;
@@ -7040,8 +7048,18 @@ canvas.addEventListener('touchstart', (e) => {
         setTimeout(() => keys['Enter'] = false, 100);
     } else if (gameState === 'gameOver') {
         if (gameOverTimer > 60) {
-            keys['Enter'] = true;
-            setTimeout(() => keys['Enter'] = false, 100);
+            for (const btn of gameOverButtons) {
+                if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
+                    if (btn.action === 'continue') {
+                        keys['Enter'] = true;
+                        setTimeout(() => keys['Enter'] = false, 100);
+                    } else if (btn.action === 'restart') {
+                        keys['KeyR'] = true;
+                        setTimeout(() => keys['KeyR'] = false, 100);
+                    }
+                    return;
+                }
+            }
         }
     } else if (gameState === 'victory') {
         keys['Enter'] = true;
@@ -7123,10 +7141,23 @@ canvas.addEventListener('click', (e) => {
                 return;
             }
         }
+    } else if (gameState === 'story') {
+        keys['Enter'] = true;
+        setTimeout(() => keys['Enter'] = false, 100);
     } else if (gameState === 'gameOver') {
         if (gameOverTimer > 60) {
-            keys['Enter'] = true;
-            setTimeout(() => keys['Enter'] = false, 100);
+            for (const btn of gameOverButtons) {
+                if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
+                    if (btn.action === 'continue') {
+                        keys['Enter'] = true;
+                        setTimeout(() => keys['Enter'] = false, 100);
+                    } else if (btn.action === 'restart') {
+                        keys['KeyR'] = true;
+                        setTimeout(() => keys['KeyR'] = false, 100);
+                    }
+                    return;
+                }
+            }
         }
     } else if (gameState === 'victory') {
         keys['Enter'] = true;
