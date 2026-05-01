@@ -358,6 +358,7 @@ let sfxEnabled = true;
 
 // ---- MARKET / SHOP ----
 let totalCoins = parseInt(localStorage.getItem('chicoEstrella_totalCoins')) || 0;
+let sessionCoins = 0; // Coins earned this run — transferred to totalCoins when entering market
 let selectedSkin = parseInt(localStorage.getItem('chicoEstrella_selectedSkin')) || 0;
 let unlockedSkins = JSON.parse(localStorage.getItem('chicoEstrella_unlockedSkins')) || [true, false, false, false, false, false, false, false];
 // Ensure array has 8 entries for existing users
@@ -5267,8 +5268,7 @@ function updateCoins() {
         if (Math.abs(player.x + player.w/2 - c.x) < 20 && Math.abs(player.y + player.h/2 - c.y) < 20) {
             c.collected = true;
             score += 50;
-            totalCoins += 50;
-            saveMarketData();
+            sessionCoins += 50;
             sfxCoin();
             spawnParticles(c.x, c.y, '#FFD700', 5, 2);
             player.starPower = Math.min(player.maxStarPower, player.starPower + 5);
@@ -5295,8 +5295,7 @@ function updatePowerUps() {
                 spawnParticles(pu.x, pu.y, '#9C27B0', 10, 3);
             }
             score += 200;
-            totalCoins += 200;
-            saveMarketData();
+            sessionCoins += 200;
         }
     }
 }
@@ -6985,6 +6984,7 @@ function drawTitleScreen() {
             currentLevel = 0;
             lives = MAX_LIVES;
             score = 0;
+            sessionCoins = 0;
             savedCheckpoint = { level: 0, score: 0, x: 80 };
             fadeOut(() => {
                 gameState = 'story';
@@ -7004,8 +7004,11 @@ function drawTitleScreen() {
                 fadeIn();
             });
         } else if (titleSelection === 3) {
-            // MERCADO
+            // MERCADO — transfer session coins to market balance on entry
             fadeOut(() => {
+                totalCoins += sessionCoins;
+                sessionCoins = 0;
+                saveMarketData();
                 marketSelection = 0;
                 gameState = 'market';
                 fadeIn();
@@ -7624,6 +7627,7 @@ function drawGameOverScreen() {
             keys['KeyR'] = false;
             lives = MAX_LIVES;
             score = 0;
+            sessionCoins = 0;
             currentLevel = 0;
             storyIndex = 0;
             fadeOut(() => {
@@ -7689,8 +7693,7 @@ function updateBonus() {
         if (Math.sqrt(dx * dx + dy * dy) < coin.radius + 20) {
             coin.collected = true;
             score += 50;
-            totalCoins += 50;
-            saveMarketData();
+            sessionCoins += 50;
             sfxCoin();
             spawnParticles(coinScreenX, coin.y, '#FFD700', 6, 2);
         }
