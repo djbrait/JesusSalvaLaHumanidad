@@ -3466,6 +3466,8 @@ function drawChicoOpaco(b) {
 function drawEnemy(e) {
     if (!e.alive) return;
     const x = e.x - camera.x, y = e.y;
+    // Off-screen culling - skip drawing (and expensive GPU effects like shadowBlur) for invisible enemies
+    if (x + e.w < -40 || x > canvas.width + 40) return;
     
     if (e.type === 'slime' || e.type === 'toxic' || e.type === 'shadow') {
         const color = e.type === 'slime' ? '#4CAF50' : e.type === 'toxic' ? '#76ff03' : '#5C005C';
@@ -3840,14 +3842,14 @@ function drawEnemy(e) {
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(-8, -14); ctx.lineTo(-12, -22); ctx.lineTo(-6, -18); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(8, -14); ctx.lineTo(12, -22); ctx.lineTo(6, -18); ctx.stroke();
-        // Glowing neon green eyes
-        ctx.shadowColor = '#00FF00';
-        ctx.shadowBlur = 8;
+        // Glowing neon green eyes (no shadowBlur for performance)
         ctx.fillStyle = '#00FF00';
         ctx.beginPath(); ctx.arc(-6, -2, 4, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(6, -2, 4, 0, Math.PI * 2); ctx.fill();
-        // Dark pupils
-        ctx.shadowBlur = 0;
+        // Inner bright pupils
+        ctx.fillStyle = '#CCFF00';
+        ctx.beginPath(); ctx.arc(-6, -2, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(6, -2, 2, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#000';
         ctx.beginPath(); ctx.arc(-6, -2, 1.5, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(6, -2, 1.5, 0, Math.PI * 2); ctx.fill();
@@ -3858,6 +3860,7 @@ function drawEnemy(e) {
 function drawCoin(c) {
     if (c.collected) return;
     const x = c.x - camera.x;
+    if (x < -20 || x > canvas.width + 20) return;
     const bob = Math.sin(c.animTimer * 0.08) * 4;
     const stretch = 0.5 + Math.abs(Math.cos(c.animTimer * 0.05)) * 0.5;
     
