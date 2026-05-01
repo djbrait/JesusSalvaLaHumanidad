@@ -171,6 +171,12 @@ function sfxLaser() { playSound(900, 0.12, 'sawtooth', 0.1); setTimeout(() => pl
 function sfxNinjaStar() { playSound(600, 0.1, 'triangle', 0.1); setTimeout(() => playSound(800, 0.08, 'triangle', 0.08), 50); }
 function sfxFire() { playSound(200, 0.15, 'sawtooth', 0.12); setTimeout(() => playSound(350, 0.1, 'sawtooth', 0.1), 40); setTimeout(() => playSound(250, 0.12, 'sawtooth', 0.08), 80); }
 function sfxIce() { playSound(900, 0.12, 'sine', 0.1); setTimeout(() => playSound(1200, 0.1, 'sine', 0.08), 50); setTimeout(() => playSound(700, 0.08, 'sine', 0.06), 90); }
+function sfxCookie() { playSound(300, 0.1, 'square', 0.08); setTimeout(() => playSound(200, 0.08, 'square', 0.06), 40); }
+function sfxSoda() { playSound(150, 0.12, 'sawtooth', 0.1); setTimeout(() => playSound(250, 0.1, 'sawtooth', 0.08), 30); setTimeout(() => playSound(180, 0.08, 'sawtooth', 0.06), 60); }
+function sfxTeaCup() { playSound(800, 0.1, 'triangle', 0.08); setTimeout(() => playSound(600, 0.08, 'triangle', 0.06), 50); }
+function sfxKnife() { playSound(1100, 0.1, 'sawtooth', 0.06); setTimeout(() => playSound(900, 0.08, 'sawtooth', 0.05), 30); }
+function sfxStretchArm() { playSound(200, 0.12, 'square', 0.1); setTimeout(() => playSound(350, 0.1, 'square', 0.08), 40); }
+function sfxPaper() { playSound(1200, 0.08, 'sine', 0.06); setTimeout(() => playSound(1000, 0.06, 'sine', 0.05), 30); }
 
 // ---- MUSIC ENGINE ----
 let musicPlaying = false;
@@ -353,9 +359,9 @@ let sfxEnabled = true;
 // ---- MARKET / SHOP ----
 let totalCoins = parseInt(localStorage.getItem('chicoEstrella_totalCoins')) || 0;
 let selectedSkin = parseInt(localStorage.getItem('chicoEstrella_selectedSkin')) || 0;
-let unlockedSkins = JSON.parse(localStorage.getItem('chicoEstrella_unlockedSkins')) || [true, false, false, false, false];
-// Ensure array has 5 entries for existing users
-while (unlockedSkins.length < 5) unlockedSkins.push(false);
+let unlockedSkins = JSON.parse(localStorage.getItem('chicoEstrella_unlockedSkins')) || [true, false, false, false, false, false, false, false];
+// Ensure array has 8 entries for existing users
+while (unlockedSkins.length < 8) unlockedSkins.push(false);
 let marketSelection = 0;
 let marketButtons = [];
 
@@ -448,7 +454,7 @@ const LEVEL_THEMES = [
     { name: 'El Colegio del Ruido', sky1: '#8B4513', sky2: '#D2691E', ground: '#654321', platform: '#8B6914', accent: '#FFD700' }
 ];
 
-const SKIN_NAMES = ['Chico Estrella', 'Chica Fugaz', 'Chico Luminoso', 'Chico Invisible', 'Magnate'];
+const SKIN_NAMES = ['Chico Estrella', 'Chica Fugaz', 'Chico Luminoso', 'Chico Invisible', 'Magnate', 'Chico Goloso', 'Chico Imán', 'Chica Masa'];
 
 const STORIES = [
     [
@@ -469,7 +475,7 @@ const STORIES = [
         "¡Romecio fue destruido! Pero una presencia oscura\nacecha desde otra dimensión...",
         "EL CAMBIA FORMAS, un Chico Estrella de colores\ninvertidos, ha abierto un portal.",
         "Este villano quiere reemplazar al verdadero héroe\ny conquistar la Tierra.",
-        "¡La batalla final comienza!"
+        "¡Hay que derrotarlo!"
     ],
     [
         "¡El Cambia Formas fue vencido!\nPero una nueva amenaza acecha...",
@@ -1911,6 +1917,410 @@ function drawMagnate(x, y, w, h, facing, animFrame, attacking, invincible, isEvi
     ctx.restore();
 }
 
+function drawChicoGoloso(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
+    if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
+    ctx.save();
+    ctx.translate(x + w/2, y + h/2);
+    if (facing === -1) ctx.scale(-1, 1);
+    const cx = -w/2, cy = -h/2;
+
+    // Chico Goloso is slightly bigger - scale up 15%
+    ctx.scale(1.15, 1.15);
+    const ocx = cx / 1.15, ocy = cy / 1.15;
+
+    // Legs (pink, thick)
+    const legStep = isRunning ? Math.sin(animFrame * 0.3) * 6 : Math.sin(animFrame * 0.15) * 3;
+    ctx.fillStyle = '#FFB6C1';
+    ctx.fillRect(ocx + w * 0.15, ocy + h * 0.72 + legStep, w * 0.25, h * 0.28);
+    ctx.fillRect(ocx + w * 0.55, ocy + h * 0.72 - legStep, w * 0.25, h * 0.28);
+    // Cyan shoes
+    ctx.fillStyle = '#00CED1';
+    ctx.fillRect(ocx + w * 0.12, ocy + h * 0.92 + legStep, w * 0.3, h * 0.08);
+    ctx.fillRect(ocx + w * 0.52, ocy + h * 0.92 - legStep, w * 0.3, h * 0.08);
+
+    // Body (cyan shirt, round/fat)
+    ctx.fillStyle = '#00CED1';
+    ctx.beginPath();
+    ctx.ellipse(ocx + w * 0.5, ocy + h * 0.52, w * 0.42, h * 0.26, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Brown apron
+    ctx.fillStyle = '#8B6914';
+    ctx.fillRect(ocx + w * 0.25, ocy + h * 0.38, w * 0.5, h * 0.34);
+    // Apron straps
+    ctx.strokeStyle = '#8B6914';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(ocx + w * 0.3, ocy + h * 0.38);
+    ctx.lineTo(ocx + w * 0.35, ocy + h * 0.18);
+    ctx.moveTo(ocx + w * 0.7, ocy + h * 0.38);
+    ctx.lineTo(ocx + w * 0.65, ocy + h * 0.18);
+    ctx.stroke();
+    // Cookie on apron
+    ctx.fillStyle = '#D2691E';
+    ctx.beginPath();
+    ctx.arc(ocx + w * 0.5, ocy + h * 0.52, w * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#3E2723';
+    ctx.fillRect(ocx + w * 0.46, ocy + h * 0.49, 3, 3);
+    ctx.fillRect(ocx + w * 0.52, ocy + h * 0.54, 3, 3);
+
+    // Arms (pink, thick)
+    const armSwing = attacking ? -20 : Math.sin(animFrame * 0.15) * 5;
+    ctx.fillStyle = '#FFB6C1';
+    // Left arm
+    ctx.save();
+    ctx.translate(ocx + w * 0.12, ocy + h * 0.35);
+    ctx.rotate((armSwing - 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.1, 0, w * 0.18, h * 0.3);
+    ctx.restore();
+    // Right arm
+    ctx.save();
+    ctx.translate(ocx + w * 0.88, ocy + h * 0.35);
+    ctx.rotate((-armSwing + 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.08, 0, w * 0.18, h * 0.3);
+    ctx.restore();
+
+    // Head (pink, round, big)
+    ctx.fillStyle = '#FFB6C1';
+    ctx.beginPath();
+    ctx.arc(ocx + w * 0.5, ocy + h * 0.15, w * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cyan cap
+    ctx.fillStyle = '#00CED1';
+    ctx.beginPath();
+    ctx.ellipse(ocx + w * 0.5, ocy + h * 0.04, w * 0.34, h * 0.08, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(ocx + w * 0.18, ocy + h * 0.02, w * 0.64, h * 0.06);
+
+    // Ears
+    ctx.fillStyle = '#FFB6C1';
+    ctx.beginPath();
+    ctx.arc(ocx + w * 0.15, ocy + h * 0.14, w * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(ocx + w * 0.85, ocy + h * 0.14, w * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#000';
+    ctx.fillRect(ocx + w * 0.35, ocy + h * 0.11, 4, 5);
+    ctx.fillRect(ocx + w * 0.58, ocy + h * 0.11, 4, 5);
+
+    // Eyebrows
+    ctx.fillRect(ocx + w * 0.32, ocy + h * 0.08, 8, 2);
+    ctx.fillRect(ocx + w * 0.56, ocy + h * 0.08, 8, 2);
+
+    // Open mouth with tongue
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(ocx + w * 0.5, ocy + h * 0.22, w * 0.1, 0, Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#FF6B6B';
+    ctx.beginPath();
+    ctx.ellipse(ocx + w * 0.5, ocy + h * 0.25, w * 0.05, h * 0.03, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cookie/soda glow when attacking
+    if (attacking) {
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = '#D2691E';
+        ctx.beginPath();
+        ctx.arc(ocx + w * 0.85, ocy + h * 0.5, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+}
+
+function drawChicoIman(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
+    if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
+    ctx.save();
+    ctx.translate(x + w/2, y + h/2);
+    if (facing === -1) ctx.scale(-1, 1);
+    const cx = -w/2, cy = -h/2;
+
+    // Cape (white, flowing)
+    const capeWave = Math.sin(animFrame * 0.15) * 4;
+    ctx.fillStyle = '#eee';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.2, cy + h * 0.25);
+    ctx.quadraticCurveTo(cx - 8 + capeWave, cy + h * 0.6, cx - 5 + capeWave, cy + h * 0.85);
+    ctx.lineTo(cx + w * 0.15, cy + h * 0.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Boots (black, pointy)
+    const legStep = isRunning ? Math.sin(animFrame * 0.3) * 6 : Math.sin(animFrame * 0.15) * 3;
+    ctx.fillStyle = '#000';
+    // Left boot
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.2, cy + h * 0.8 + legStep);
+    ctx.lineTo(cx + w * 0.15, cy + h);
+    ctx.lineTo(cx + w * 0.38, cy + h);
+    ctx.lineTo(cx + w * 0.4, cy + h * 0.8 + legStep);
+    ctx.closePath();
+    ctx.fill();
+    // Right boot
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.6, cy + h * 0.8 - legStep);
+    ctx.lineTo(cx + w * 0.62, cy + h);
+    ctx.lineTo(cx + w * 0.85, cy + h);
+    ctx.lineTo(cx + w * 0.8, cy + h * 0.8 - legStep);
+    ctx.closePath();
+    ctx.fill();
+
+    // Legs - left white, right black
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.22, cy + h * 0.65 + legStep, w * 0.18, h * 0.16);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx + w * 0.6, cy + h * 0.65 - legStep, w * 0.18, h * 0.16);
+
+    // Body - split: left white, right black
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.15, cy + h * 0.3, w * 0.35, h * 0.37);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx + w * 0.5, cy + h * 0.3, w * 0.35, h * 0.37);
+
+    // Black circles on white side
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.32, cy + h * 0.48, w * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    // White circle on black side
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.68, cy + h * 0.48, w * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Belt
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(cx + w * 0.15, cy + h * 0.62, w * 0.7, h * 0.04);
+    // M buckles
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('M', cx + w * 0.35, cy + h * 0.66);
+    ctx.fillText('M', cx + w * 0.65, cy + h * 0.66);
+
+    // Arms - left white, right black
+    const armSwing = attacking ? -25 : Math.sin(animFrame * 0.15) * 5;
+    ctx.fillStyle = '#fff';
+    ctx.save();
+    ctx.translate(cx + w * 0.12, cy + h * 0.32);
+    ctx.rotate((armSwing - 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.06, 0, w * 0.14, h * 0.28);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(-w * 0.06, h * 0.2, w * 0.14, h * 0.08);
+    ctx.restore();
+    ctx.fillStyle = '#000';
+    ctx.save();
+    ctx.translate(cx + w * 0.88, cy + h * 0.32);
+    ctx.rotate((-armSwing + 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.08, 0, w * 0.14, h * 0.28);
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(-w * 0.08, h * 0.2, w * 0.14, h * 0.08);
+    ctx.restore();
+
+    // Head - split: left white, right black, angular/blocky
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.02, w * 0.3, h * 0.26);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx + w * 0.5, cy + h * 0.02, w * 0.3, h * 0.26);
+
+    // Spiky hair
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.2, cy + h * 0.04);
+    ctx.lineTo(cx + w * 0.15, cy - h * 0.06);
+    ctx.lineTo(cx + w * 0.3, cy + h * 0.02);
+    ctx.lineTo(cx + w * 0.28, cy - h * 0.08);
+    ctx.lineTo(cx + w * 0.4, cy);
+    ctx.lineTo(cx + w * 0.5, cy - h * 0.05);
+    ctx.lineTo(cx + w * 0.6, cy);
+    ctx.lineTo(cx + w * 0.7, cy - h * 0.07);
+    ctx.lineTo(cx + w * 0.8, cy + h * 0.04);
+    ctx.lineTo(cx + w * 0.2, cy + h * 0.04);
+    ctx.fill();
+
+    // Glasses/visor (angular)
+    ctx.fillStyle = '#333';
+    ctx.fillRect(cx + w * 0.22, cy + h * 0.08, w * 0.56, h * 0.1);
+    // Eye slots
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.28, cy + h * 0.1, w * 0.12, h * 0.06);
+    ctx.fillRect(cx + w * 0.58, cy + h * 0.1, w * 0.12, h * 0.06);
+
+    // Grin
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.35, cy + h * 0.22);
+    ctx.lineTo(cx + w * 0.65, cy + h * 0.22);
+    ctx.lineTo(cx + w * 0.55, cy + h * 0.26);
+    ctx.lineTo(cx + w * 0.4, cy + h * 0.26);
+    ctx.closePath();
+    ctx.fill();
+
+    // Magnet glow when attacking
+    if (attacking) {
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#FF0000';
+        ctx.beginPath();
+        ctx.arc(cx + w * 0.85, cy + h * 0.45, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0000FF';
+        ctx.beginPath();
+        ctx.arc(cx + w * 0.15, cy + h * 0.45, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+}
+
+function drawChicaMasa(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
+    if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
+    ctx.save();
+    ctx.translate(x + w/2, y + h/2);
+    if (facing === -1) ctx.scale(-1, 1);
+    const cx = -w/2, cy = -h/2;
+
+    // Red cape
+    const capeWave = Math.sin(animFrame * 0.15) * 4;
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.25, cy + h * 0.22);
+    ctx.quadraticCurveTo(cx - 10 + capeWave, cy + h * 0.55, cx - 6 + capeWave, cy + h * 0.82);
+    ctx.lineTo(cx + w * 0.2, cy + h * 0.78);
+    ctx.closePath();
+    ctx.fill();
+
+    // Red boots
+    const legStep = isRunning ? Math.sin(animFrame * 0.3) * 6 : Math.sin(animFrame * 0.15) * 3;
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.85 + legStep, w * 0.2, h * 0.15);
+    ctx.fillRect(cx + w * 0.58, cy + h * 0.85 - legStep, w * 0.2, h * 0.15);
+
+    // Yellow legs
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(cx + w * 0.22, cy + h * 0.68 + legStep, w * 0.16, h * 0.18);
+    ctx.fillRect(cx + w * 0.6, cy + h * 0.68 - legStep, w * 0.16, h * 0.18);
+
+    // Yellow body
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(cx + w * 0.18, cy + h * 0.3, w * 0.64, h * 0.4);
+
+    // Dark red belt
+    ctx.fillStyle = '#8B0000';
+    ctx.fillRect(cx + w * 0.18, cy + h * 0.63, w * 0.64, h * 0.05);
+
+    // Red lightning bolt on chest
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.52, cy + h * 0.32);
+    ctx.lineTo(cx + w * 0.42, cy + h * 0.48);
+    ctx.lineTo(cx + w * 0.52, cy + h * 0.46);
+    ctx.lineTo(cx + w * 0.44, cy + h * 0.6);
+    ctx.lineTo(cx + w * 0.56, cy + h * 0.44);
+    ctx.lineTo(cx + w * 0.48, cy + h * 0.46);
+    ctx.closePath();
+    ctx.fill();
+
+    // Red collar/neckpiece
+    ctx.fillStyle = '#FF0000';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.3, cy + h * 0.28);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.34);
+    ctx.lineTo(cx + w * 0.7, cy + h * 0.28);
+    ctx.lineTo(cx + w * 0.7, cy + h * 0.32);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.38);
+    ctx.lineTo(cx + w * 0.3, cy + h * 0.32);
+    ctx.closePath();
+    ctx.fill();
+
+    // Arms (yellow with red gloves)
+    const armSwing = attacking ? -30 : Math.sin(animFrame * 0.15) * 5;
+    // Left arm
+    ctx.fillStyle = '#FFD700';
+    ctx.save();
+    ctx.translate(cx + w * 0.12, cy + h * 0.32);
+    ctx.rotate((armSwing - 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.05, 0, w * 0.12, h * 0.22);
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(-w * 0.06, h * 0.18, w * 0.14, h * 0.1);
+    ctx.restore();
+    // Right arm (stretches when attacking with Z)
+    ctx.fillStyle = '#FFD700';
+    ctx.save();
+    ctx.translate(cx + w * 0.88, cy + h * 0.32);
+    ctx.rotate((-armSwing + 10) * Math.PI / 180);
+    const armLen = attacking ? h * 0.35 : h * 0.22;
+    ctx.fillRect(-w * 0.07, 0, w * 0.12, armLen);
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(-w * 0.08, armLen - h * 0.06, w * 0.14, h * 0.1);
+    ctx.restore();
+
+    // Head (blue face)
+    ctx.fillStyle = '#1E90FF';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy + h * 0.14, w * 0.26, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Orange hair (curly, big)
+    ctx.fillStyle = '#FF8C00';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy + h * 0.06, w * 0.3, Math.PI, 0);
+    ctx.fill();
+    // Side curls
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.15, cy + h * 0.1, w * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.85, cy + h * 0.1, w * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    // Top poof
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy - h * 0.02, w * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Red mask/visor
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(cx + w * 0.24, cy + h * 0.08, w * 0.52, h * 0.08);
+    // Mask pointy sides
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.24, cy + h * 0.08);
+    ctx.lineTo(cx + w * 0.18, cy + h * 0.12);
+    ctx.lineTo(cx + w * 0.24, cy + h * 0.16);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.76, cy + h * 0.08);
+    ctx.lineTo(cx + w * 0.82, cy + h * 0.12);
+    ctx.lineTo(cx + w * 0.76, cy + h * 0.16);
+    ctx.fill();
+
+    // Eyes (white in mask)
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.32, cy + h * 0.1, w * 0.12, h * 0.05);
+    ctx.fillRect(cx + w * 0.56, cy + h * 0.1, w * 0.12, h * 0.05);
+
+    // Smile
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.35, cy + h * 0.2);
+    ctx.quadraticCurveTo(cx + w * 0.5, cy + h * 0.27, cx + w * 0.65, cy + h * 0.2);
+    ctx.lineTo(cx + w * 0.65, cy + h * 0.22);
+    ctx.quadraticCurveTo(cx + w * 0.5, cy + h * 0.28, cx + w * 0.35, cy + h * 0.22);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+}
+
 function drawPlayerCharacter(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
     if (selectedSkin === 1 && unlockedSkins[1]) {
         drawChicaFugaz(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
@@ -1920,6 +2330,12 @@ function drawPlayerCharacter(x, y, w, h, facing, animFrame, attacking, invincibl
         drawChicoInvisible(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     } else if (selectedSkin === 4 && unlockedSkins[4]) {
         drawMagnate(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
+    } else if (selectedSkin === 5 && unlockedSkins[5]) {
+        drawChicoGoloso(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
+    } else if (selectedSkin === 6 && unlockedSkins[6]) {
+        drawChicoIman(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
+    } else if (selectedSkin === 7 && unlockedSkins[7]) {
+        drawChicaMasa(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     } else {
         drawChicoEstrella(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     }
@@ -3244,17 +3660,6 @@ function drawUI() {
     ctx.font = 'bold 14px Arial';
     ctx.fillText(`♥ ${player.hp}/${player.maxHp}`, 20, 28);
     
-    // Star Power bar
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(10, 40, 120, 16);
-    ctx.fillStyle = '#333';
-    ctx.fillRect(12, 42, 116, 12);
-    ctx.fillStyle = '#FFD700';
-    ctx.fillRect(12, 42, 116 * (player.starPower / player.maxStarPower), 12);
-    ctx.fillStyle = '#FFD700';
-    ctx.font = '10px Arial';
-    ctx.fillText('★ PODER ESTELAR', 14, 52);
-    
     // Lives as stars (top right)
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(canvas.width - 140, 8, 132, 28);
@@ -3806,6 +4211,61 @@ function updatePlayer() {
                 damage: isGiant ? 3 : 2,
                 w: isGiant ? 30 : 18, h: isGiant ? 10 : 6
             });
+        } else if (selectedSkin === 5 && unlockedSkins[5]) {
+            // Chico Goloso: lanza cookies al enemigo más cercano
+            player.attacking = true;
+            player.attackTimer = 15;
+            player.attackCooldown = 10;
+            sfxCookie();
+            const isGiant = player.giantTimer > 0;
+            const aim = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim.dx >= 0 ? player.w + 2 : -14),
+                y: player.y + player.h * 0.3,
+                vx: aim.dx * 7,
+                vy: aim.dy * 7,
+                type: 'cookie',
+                life: 55,
+                damage: isGiant ? 3 : 2,
+                w: isGiant ? 24 : 16, h: isGiant ? 24 : 16,
+                rotation: 0
+            });
+        } else if (selectedSkin === 6 && unlockedSkins[6]) {
+            // Chico Imán: lanza taza de té de metal al enemigo más cercano
+            player.attacking = true;
+            player.attackTimer = 15;
+            player.attackCooldown = 12;
+            sfxTeaCup();
+            const isGiant = player.giantTimer > 0;
+            const aim = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim.dx >= 0 ? player.w + 2 : -14),
+                y: player.y + player.h * 0.3,
+                vx: aim.dx * 8,
+                vy: aim.dy * 8,
+                type: 'teaCup',
+                life: 50,
+                damage: isGiant ? 3 : 2,
+                w: isGiant ? 22 : 14, h: isGiant ? 22 : 14
+            });
+        } else if (selectedSkin === 7 && unlockedSkins[7]) {
+            // Chica Masa: brazo elástico al enemigo más cercano
+            player.attacking = true;
+            player.attackTimer = 20;
+            player.attackCooldown = 14;
+            sfxStretchArm();
+            const isGiant = player.giantTimer > 0;
+            const aim = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim.dx >= 0 ? player.w + 2 : -8),
+                y: player.y + player.h * 0.35,
+                vx: aim.dx * 10,
+                vy: aim.dy * 10,
+                type: 'stretchArm',
+                life: 30,
+                damage: isGiant ? 4 : 3,
+                w: isGiant ? 28 : 18, h: isGiant ? 14 : 8
+            });
         } else {
             player.attacking = true;
             player.attackTimer = 15;
@@ -3852,8 +4312,7 @@ function updatePlayer() {
         }
     } else if (selectedSkin === 4 && unlockedSkins[4]) {
         // Magnate: rayo de hielo por las manos al enemigo más cercano
-        if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.starPower >= 20 && player.attackCooldown === 0) {
-            player.starPower -= 20;
+        if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.attackCooldown === 0) {
             player.attackCooldown = 8;
             sfxIce();
             const isGiant2 = player.giantTimer > 0;
@@ -3869,8 +4328,63 @@ function updatePlayer() {
                 w: isGiant2 ? 28 : 16, h: isGiant2 ? 10 : 6
             });
         }
-    } else if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.starPower >= 20 && player.attackCooldown === 0) {
-        player.starPower -= 20;
+    } else if (selectedSkin === 5 && unlockedSkins[5]) {
+        // Chico Goloso: lanza líquido con gas (soda) al enemigo más cercano
+        if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.attackCooldown === 0) {
+            player.attackCooldown = 6;
+            sfxSoda();
+            const isGiant2 = player.giantTimer > 0;
+            const aim2 = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim2.dx >= 0 ? player.w + 2 : -10),
+                y: player.y + player.h * 0.35,
+                vx: aim2.dx * 9,
+                vy: aim2.dy * 9,
+                type: 'sodaLiquid',
+                life: 40,
+                damage: isGiant2 ? 3 : 2,
+                w: isGiant2 ? 26 : 16, h: isGiant2 ? 10 : 6
+            });
+        }
+    } else if (selectedSkin === 6 && unlockedSkins[6]) {
+        // Chico Imán: lanza cuchillos al enemigo más cercano
+        if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.attackCooldown === 0) {
+            player.attackCooldown = 8;
+            sfxKnife();
+            const isGiant2 = player.giantTimer > 0;
+            const aim2 = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim2.dx >= 0 ? player.w + 2 : -10),
+                y: player.y + player.h * 0.35,
+                vx: aim2.dx * 10,
+                vy: aim2.dy * 10,
+                type: 'knife',
+                life: 45,
+                damage: isGiant2 ? 4 : 2,
+                w: isGiant2 ? 24 : 14, h: isGiant2 ? 8 : 4,
+                rotation: 0
+            });
+        }
+    } else if (selectedSkin === 7 && unlockedSkins[7]) {
+        // Chica Masa: lanza hojas de papel con filo al enemigo más cercano
+        if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.attackCooldown === 0) {
+            player.attackCooldown = 7;
+            sfxPaper();
+            const isGiant2 = player.giantTimer > 0;
+            const aim2 = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim2.dx >= 0 ? player.w + 2 : -10),
+                y: player.y + player.h * 0.3,
+                vx: aim2.dx * 9,
+                vy: aim2.dy * 9,
+                type: 'paperSheet',
+                life: 50,
+                damage: isGiant2 ? 3 : 2,
+                w: isGiant2 ? 22 : 14, h: isGiant2 ? 18 : 10,
+                rotation: 0
+            });
+        }
+    } else if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.attackCooldown === 0) {
         player.attackCooldown = 6;
         sfxNinjaStar();
         const isGiant2 = player.giantTimer > 0;
@@ -3920,9 +4434,7 @@ function updatePlayer() {
     }
     
     // Star power regen
-    if (player.starPower < player.maxStarPower) {
-        player.starPower += 0.05;
-    }
+    // Star power regen (disabled - X attacks are direct now)
     
     // Check boss zone entry
     if (gameState === 'playing' && player.x > level.bossZone) {
@@ -3955,7 +4467,7 @@ function updateEnemies() {
                 e.alive = false;
                 score += 100;
                 sfxBossHit();
-                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : '#FFD700', 8);
+                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : p.type === 'cookie' ? '#D2691E' : p.type === 'sodaLiquid' ? '#7CFC00' : p.type === 'teaCup' ? '#C0C0C0' : p.type === 'knife' ? '#C0C0C0' : p.type === 'stretchArm' ? '#FF0000' : p.type === 'paperSheet' ? '#f5f5f5' : '#FFD700', 8);
                 player.starPower = Math.min(player.maxStarPower, player.starPower + 10);
                 spawnDrop(e.x + e.w/2, e.y + e.h/2);
                 addCombo();
@@ -4463,7 +4975,7 @@ function updateBoss() {
             sfxBossHit();
             shakeTimer = 5;
             shakeIntensity = 3;
-            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : '#FFD700', 6);
+            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : p.type === 'cookie' ? '#D2691E' : p.type === 'sodaLiquid' ? '#7CFC00' : p.type === 'teaCup' ? '#C0C0C0' : p.type === 'knife' ? '#C0C0C0' : p.type === 'stretchArm' ? '#FF0000' : p.type === 'paperSheet' ? '#f5f5f5' : '#FFD700', 6);
             score += 50;
             screenFlash = { timer: 4, color: '#FFD700' };
             playerProjectiles.splice(pi, 1);
@@ -4518,6 +5030,12 @@ function updatePlayerProjectiles() {
         }
         if (p.type === 'hammer') {
             p.rotation = (p.rotation || 0) + 0.25;
+        }
+        if (p.type === 'cookie') {
+            p.rotation = (p.rotation || 0) + 0.15;
+        }
+        if (p.type === 'knife' || p.type === 'paperSheet') {
+            p.rotation = (p.rotation || 0) + 0.35;
         }
         p.life--;
         if (p.life <= 0 || p.x < camera.x - 50 || p.x > camera.x + canvas.width + 50 || p.y > 550) {
@@ -4601,6 +5119,119 @@ function drawPlayerProjectiles() {
                 ctx.fillRect(sx + p.w * 0.3, p.y - 1, 2, 2);
                 ctx.fillRect(sx + p.w * 0.7, p.y + p.h - 1, 2, 2);
             }
+            ctx.restore();
+        } else if (p.type === 'cookie') {
+            // Brown cookie with chocolate chips
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            ctx.fillStyle = '#D2691E';
+            ctx.beginPath();
+            ctx.arc(0, 0, p.w/2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#3E2723';
+            ctx.fillRect(-3, -2, 3, 3);
+            ctx.fillRect(2, 1, 3, 3);
+            ctx.fillRect(-1, -5, 2, 2);
+            ctx.restore();
+        } else if (p.type === 'sodaLiquid') {
+            // Fizzy green/brown liquid stream
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = '#32CD32';
+            ctx.fillRect(sx - 2, p.y - 2, p.w + 4, p.h + 4);
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = '#7CFC00';
+            ctx.fillRect(sx, p.y, p.w, p.h);
+            // Bubbles
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.6;
+            const bub = Math.sin(Date.now() * 0.05) * 2;
+            ctx.beginPath();
+            ctx.arc(sx + p.w * 0.3, p.y + bub, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(sx + p.w * 0.7, p.y - bub + p.h, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        } else if (p.type === 'teaCup') {
+            // Metal tea cup
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            // Cup body (silver/gray)
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(-p.w/2, -p.h/3, p.w, p.h * 0.65);
+            // Cup rim
+            ctx.fillStyle = '#888';
+            ctx.fillRect(-p.w/2 - 1, -p.h/3, p.w + 2, 2);
+            // Handle
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(p.w/2 + 3, 0, 4, -Math.PI/2, Math.PI/2);
+            ctx.stroke();
+            // Steam
+            ctx.strokeStyle = 'rgba(200,200,200,0.5)';
+            ctx.lineWidth = 1;
+            const steam = Math.sin(Date.now() * 0.01) * 2;
+            ctx.beginPath();
+            ctx.moveTo(-2, -p.h/3 - 2);
+            ctx.quadraticCurveTo(steam, -p.h/3 - 6, -1, -p.h/3 - 10);
+            ctx.stroke();
+            ctx.restore();
+        } else if (p.type === 'knife') {
+            // Silver throwing knife
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            // Blade
+            ctx.fillStyle = '#C0C0C0';
+            ctx.beginPath();
+            ctx.moveTo(-p.w/2, 0);
+            ctx.lineTo(0, -p.h/2);
+            ctx.lineTo(p.w/2, 0);
+            ctx.lineTo(0, p.h/2);
+            ctx.closePath();
+            ctx.fill();
+            // Shine
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.beginPath();
+            ctx.moveTo(-p.w/4, 0);
+            ctx.lineTo(0, -p.h/4);
+            ctx.lineTo(p.w/4, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        } else if (p.type === 'stretchArm') {
+            // Extending fist (yellow arm + red glove)
+            ctx.save();
+            // Arm trail (yellow)
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(sx, p.y + 1, p.w * 0.7, p.h - 2);
+            // Fist (red glove)
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(sx + p.w, p.y + p.h/2, p.h * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        } else if (p.type === 'paperSheet') {
+            // White paper sheet with sharp edge
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+            // Fold line
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-p.w/4, -p.h/2);
+            ctx.lineTo(-p.w/4, p.h/2);
+            ctx.stroke();
+            // Sharp edge highlight
+            ctx.fillStyle = '#ccc';
+            ctx.fillRect(p.w/2 - 1, -p.h/2, 1, p.h);
             ctx.restore();
         }
     }
@@ -4687,8 +5318,26 @@ function startTutorial() {
         { x: 700,  text: '↑ o ESPACIO (2 veces)\n   ¡Salto doble!\n   Saltá y volvé a saltar en el aire', icon: '🔄' },
         { x: 950,  text: '↑ / ESPACIO + ← / →\n   Saltar y moverse en el aire\n   ¡Probá saltar entre plataformas!', icon: '🌀' },
         { x: 1350, text: 'Mayús\n   Volar muy rápido por 1 segundo\n   ¡Probalo!', icon: 'Mayús' },
-        { x: 1600, text: selectedSkin === 4 ? 'Z\n   Lanzar rayo de FUEGO por las manos\n   ¡Al enemigo más cercano!' : selectedSkin === 3 ? 'Z\n   Lanzar martillos al enemigo\n   ¡Dirigidos automáticamente!' : 'Z\n   Lanzar rayo verde por los ojos\n   ¡Apuntá al frente!', icon: 'Z' },
-        { x: 1850, text: selectedSkin === 4 ? 'X\n   Lanzar rayo de HIELO por las manos\n   ¡Congela enemigos!' : selectedSkin === 3 ? 'X\n   Alternar visibilidad\n   ¡Hacete visible/invisible!' : 'X\n   Lanzar estrellas ninja\n   ¡Giratorias y poderosas!', icon: 'X' },
+        { x: 1600, text: (function() {
+            switch(selectedSkin) {
+                case 3: return 'Z\n   Lanzar martillos al enemigo\n   ¡Dirigidos automáticamente!';
+                case 4: return 'Z\n   Lanzar rayo de FUEGO por las manos\n   ¡Al enemigo más cercano!';
+                case 5: return 'Z\n   Lanzar COOKIES al enemigo\n   ¡Al más cercano!';
+                case 6: return 'Z\n   Lanzar TAZA DE TÉ de metal\n   ¡Al enemigo más cercano!';
+                case 7: return 'Z\n   BRAZO ELÁSTICO al enemigo\n   ¡Puñetazo directo!';
+                default: return 'Z\n   Lanzar rayo verde por los ojos\n   ¡Apuntá al frente!';
+            }
+        })(), icon: 'Z' },
+        { x: 1850, text: (function() {
+            switch(selectedSkin) {
+                case 3: return 'X\n   Alternar visibilidad\n   ¡Hacete visible/invisible!';
+                case 4: return 'X\n   Lanzar rayo de HIELO por las manos\n   ¡Congela enemigos!';
+                case 5: return 'X\n   Lanzar LÍQUIDO CON GAS (soda)\n   ¡Al enemigo más cercano!';
+                case 6: return 'X\n   Lanzar CUCHILLOS al enemigo\n   ¡Afilados y letales!';
+                case 7: return 'X\n   Lanzar HOJAS DE PAPEL con filo\n   ¡Cortantes y rápidas!';
+                default: return 'X\n   Lanzar estrellas ninja\n   ¡Giratorias y poderosas!';
+            }
+        })(), icon: 'X' },
         { x: 2100, text: 'PARED + ↑\n   ¡Salto de pared!\n   Deslizate y saltá entre paredes', icon: '🧱' },
         { x: 2550, text: 'ANILLO LAPISLÁZULI →\n   ¡Te hace GIGANTE!\n   Tocá el anillo azul', icon: '💎' },
         { x: 2900, text: 'ANILLO ESPIRAL →\n   ¡Podés VOLAR!\n   Tocá el anillo violeta', icon: '🌀' },
@@ -4821,6 +5470,61 @@ function drawTutorial() {
             ctx.globalAlpha = 1;
             ctx.fillStyle = '#00CED1';
             ctx.fillRect(sx, p.y, p.w, p.h);
+            ctx.restore();
+        } else if (p.type === 'cookie') {
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            ctx.fillStyle = '#D2691E';
+            ctx.beginPath();
+            ctx.arc(0, 0, p.w/2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#3E2723';
+            ctx.fillRect(-2, -1, 2, 2);
+            ctx.fillRect(1, 1, 2, 2);
+            ctx.restore();
+        } else if (p.type === 'sodaLiquid') {
+            ctx.save();
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = '#7CFC00';
+            ctx.fillRect(sx, p.y, p.w, p.h);
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        } else if (p.type === 'teaCup') {
+            ctx.save();
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(sx, p.y, p.w, p.h * 0.7);
+            ctx.fillStyle = '#888';
+            ctx.fillRect(sx, p.y, p.w, 2);
+            ctx.restore();
+        } else if (p.type === 'knife') {
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            ctx.fillStyle = '#C0C0C0';
+            ctx.beginPath();
+            ctx.moveTo(-p.w/2, 0);
+            ctx.lineTo(0, -p.h/2);
+            ctx.lineTo(p.w/2, 0);
+            ctx.lineTo(0, p.h/2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        } else if (p.type === 'stretchArm') {
+            ctx.save();
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(sx, p.y + 1, p.w * 0.7, p.h - 2);
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(sx + p.w, p.y + p.h/2, p.h * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        } else if (p.type === 'paperSheet') {
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
             ctx.restore();
         }
     }
@@ -5049,7 +5753,7 @@ function draw() {
 }
 
 function handleMarketAction() {
-    const skinPrices = [0, 1000, 2000, 3000, 4000];
+    const skinPrices = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000];
     const i = marketSelection;
     if (i >= SKIN_NAMES.length) return;
     if (unlockedSkins[i]) {
@@ -5066,11 +5770,11 @@ function handleMarketAction() {
 function updateMarket() {
     if (keys['ArrowLeft']) {
         keys['ArrowLeft'] = false;
-        marketSelection = (marketSelection + 4) % 5;
+        marketSelection = (marketSelection + 7) % 8;
     }
     if (keys['ArrowRight']) {
         keys['ArrowRight'] = false;
-        marketSelection = (marketSelection + 1) % 5;
+        marketSelection = (marketSelection + 1) % 8;
     }
     if (keys['Enter']) {
         keys['Enter'] = false;
@@ -5085,8 +5789,8 @@ function updateMarket() {
 function drawMarketScreen() {
     const t = Date.now() / 1000;
     const skinNames = SKIN_NAMES;
-    const skinPrices = [0, 1000, 2000, 3000, 4000];
-    const skinDrawFns = [drawChicoEstrella, drawChicaFugaz, drawChicoLuminoso, drawChicoInvisible, drawMagnate];
+    const skinPrices = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000];
+    const skinDrawFns = [drawChicoEstrella, drawChicaFugaz, drawChicoLuminoso, drawChicoInvisible, drawMagnate, drawChicoGoloso, drawChicoIman, drawChicaMasa];
 
     // Background - supermarket theme
     const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -5135,9 +5839,9 @@ function drawMarketScreen() {
     ctx.fillText('⭐ ' + totalCoins, canvas.width - 25, 40);
 
     // Character cards
-    const numSkins = 5;
-    const cardW = 120, cardH = 300;
-    const gap = 18;
+    const numSkins = 8;
+    const cardW = 100, cardH = 300;
+    const gap = 12;
     const totalW = cardW * numSkins + gap * (numSkins - 1);
     const startX = (canvas.width - totalW) / 2;
     const cardY = 80;
@@ -5168,33 +5872,33 @@ function drawMarketScreen() {
         }
 
         // Character preview
-        const previewX = cx2 + cardW/2 - 25;
+        const previewX = cx2 + cardW/2 - 20;
         const previewY = cardY + 30;
         ctx.save();
-        skinDrawFns[i](previewX, previewY, 50, 80, 1, t * 10, false, 0);
+        skinDrawFns[i](previewX, previewY, 40, 70, 1, t * 10, false, 0);
         ctx.restore();
 
         // Name
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 13px Arial';
-        ctx.fillText(skinNames[i], cx2 + cardW/2, cardY + 145);
+        ctx.font = 'bold 11px Arial';
+        ctx.fillText(skinNames[i], cx2 + cardW/2, cardY + 125);
 
         // Price or status
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 12px Arial';
         if (owned) {
             ctx.fillStyle = '#4CAF50';
-            ctx.fillText('TUYO', cx2 + cardW/2, cardY + 170);
+            ctx.fillText('TUYO', cx2 + cardW/2, cardY + 145);
         } else {
             ctx.fillStyle = '#FFD700';
-            ctx.fillText('⭐ ' + skinPrices[i], cx2 + cardW/2, cardY + 170);
+            ctx.fillText('⭐ ' + skinPrices[i], cx2 + cardW/2, cardY + 145);
         }
 
         // Action button
         const btnY = cardY + cardH - 55;
-        const btnW2 = cardW - 30;
-        const btnX2 = cx2 + 15;
-        const btnH2 = 38;
+        const btnW2 = cardW - 16;
+        const btnX2 = cx2 + 8;
+        const btnH2 = 32;
 
         let btnLabel, btnColor, btnTextColor;
         if (inUse) {
@@ -5220,9 +5924,9 @@ function drawMarketScreen() {
         ctx.lineWidth = isSelected ? 2 : 1;
         roundRect(ctx, btnX2, btnY, btnW2, btnH2, 8, true, true);
         ctx.fillStyle = btnTextColor;
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(btnLabel, cx2 + cardW/2, btnY + 25);
+        ctx.fillText(btnLabel, cx2 + cardW/2, btnY + 22);
 
         marketButtons.push({ x: cx2, y: cardY, w: cardW, h: cardH, action: 'card' + i });
     }
