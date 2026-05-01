@@ -413,12 +413,29 @@ function togglePause() {
 }
 window.addEventListener('keydown', e => {
     if (e.code === 'KeyP') togglePause();
+    if (e.code === 'Escape' && levelPickerOpen) levelPickerOpen = false;
 });
 
 // ---- SECRET LEVEL CODES ----
 let secretBuffer = '';
 let secretCodeTimer = 0; // frames to show feedback
 let secretCodeMsg = '';
+
+// ---- LEVEL PICKER (mobile) ----
+let levelPickerOpen = false;
+let levelPickerButtons = [];
+let titleTapCount = 0;
+let titleTapLastTime = 0;
+
+function openLevelPicker(levelNum) {
+    levelPickerOpen = false;
+    score = 0;
+    lives = MAX_LIVES;
+    sessionCoins = 0;
+    secretCodeMsg = `★ NIVEL ${levelNum + 1} ★`;
+    secretCodeTimer = 120;
+    fadeOut(() => { startLevel(levelNum); fadeIn(); });
+}
 
 window.addEventListener('keydown', e => {
     // Solo capturar teclas de un carácter
@@ -431,12 +448,7 @@ window.addEventListener('keydown', e => {
         const levelNum = parseInt(match[1]) - 1; // N1 → nivel 0, N9 → nivel 8
         if (levelNum < LEVEL_THEMES.length) {
             secretBuffer = '';
-            secretCodeMsg = `★ NIVEL ${levelNum + 1} ★`;
-            secretCodeTimer = 120;
-            score = 0;
-            lives = MAX_LIVES;
-            sessionCoins = 0;
-            fadeOut(() => { startLevel(levelNum); fadeIn(); });
+            openLevelPicker(levelNum);
         }
     }
 });
@@ -6669,6 +6681,9 @@ function draw() {
         drawMarketScreen();
     }
     
+    // Level picker overlay (mobile secret codes)
+    if (levelPickerOpen) drawLevelPicker();
+
     // Transition overlay
     if (transitionAlpha > 0) {
         ctx.fillStyle = `rgba(0,0,0,${transitionAlpha})`;
@@ -6892,6 +6907,66 @@ function drawMarketScreen() {
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('←→ Elegir | ENTER Comprar/Seleccionar | ESC Volver', canvas.width/2, canvas.height - 15);
+
+    ctx.textAlign = 'left';
+}
+
+function drawLevelPicker() {
+    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('★ ELEGÍ UN NIVEL ★', canvas.width / 2, 70);
+
+    const btnW = 130, btnH = 72, gap = 14;
+    const cols = 3;
+    const gridW = cols * btnW + (cols - 1) * gap;
+    const startX = canvas.width / 2 - gridW / 2;
+    const startY = 100;
+    levelPickerButtons = [];
+
+    for (let i = 0; i < LEVEL_THEMES.length; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const bx = startX + col * (btnW + gap);
+        const by = startY + row * (btnH + gap);
+        levelPickerButtons.push({ x: bx, y: by, w: btnW, h: btnH, level: i });
+
+        ctx.fillStyle = '#1a0a3e';
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        roundRect(ctx, bx, by, btnW, btnH, 12, true, true);
+
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 22px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`N${i + 1}`, bx + btnW / 2, by + 26);
+
+        ctx.fillStyle = '#aaa';
+        ctx.font = '10px Arial';
+        // Show first 2 words of level name to fit
+        const words = LEVEL_THEMES[i].name.split(' ');
+        const line1 = words.slice(0, 3).join(' ');
+        const line2 = words.slice(3).join(' ');
+        ctx.fillText(line1, bx + btnW / 2, by + 46);
+        if (line2) ctx.fillText(line2, bx + btnW / 2, by + 60);
+    }
+
+    // Close button
+    const closeBtnW = 160, closeBtnH = 44;
+    const cbx = canvas.width / 2 - closeBtnW / 2;
+    const cby = startY + 3 * (btnH + gap) + 10;
+    levelPickerButtons.push({ x: cbx, y: cby, w: closeBtnW, h: closeBtnH, level: -1 });
+    ctx.fillStyle = '#2a0000';
+    ctx.strokeStyle = '#ff4444';
+    ctx.lineWidth = 2;
+    roundRect(ctx, cbx, cby, closeBtnW, closeBtnH, 12, true, true);
+    ctx.fillStyle = '#ff4444';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕ Cerrar', canvas.width / 2, cby + 30);
 
     ctx.textAlign = 'left';
 }
@@ -8012,8 +8087,37 @@ canvas.addEventListener('click', (e) => {
     const scaleY = canvas.height / rect.height;
     const tx = (e.clientX - rect.left) * scaleX;
     const ty = (e.clientY - rect.top) * scaleY;
-    
+
+    // Level picker overlay takes priority over everything
+    if (levelPickerOpen) {
+        for (const btn of levelPickerButtons) {
+            if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
+                if (btn.level === -1) {
+                    levelPickerOpen = false;
+                } else {
+                    openLevelPicker(btn.level);
+                }
+                return;
+            }
+        }
+        // Tap outside buttons closes picker
+        levelPickerOpen = false;
+        return;
+    }
+
     if (gameState === 'title') {
+        // Detect 5 rapid taps on the title/logo area (above the menu buttons)
+        if (ty < 295) {
+            const now = Date.now();
+            if (now - titleTapLastTime > 700) titleTapCount = 0;
+            titleTapLastTime = now;
+            titleTapCount++;
+            if (titleTapCount >= 5) {
+                titleTapCount = 0;
+                levelPickerOpen = true;
+            }
+            return;
+        }
         for (const btn of titleButtons) {
             if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
                 if (btn.action === 'play') titleSelection = 0;
