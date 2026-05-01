@@ -1,6 +1,387 @@
 # ⭐ Chico Estrella - La Aventura
 
 Un juego de plataformas 2D creado íntegramente con HTML5 Canvas y JavaScript vanilla.  
+Acompaña a Chico Estrella en su misión de proteger Buenos Aires de villanos únicos a lo largo de 9 niveles temáticos.
+
+**Versión actual del juego: `1.0`**  
+**Producción:** https://chico-estrella-pwa.web.app
+
+---
+
+## Índice
+
+1. [Cómo Jugar](#-cómo-jugar)
+2. [Códigos Secretos](#-códigos-secretos)
+3. [Iniciar el Juego](#-iniciar-el-juego)
+4. [Historia](#-historia)
+5. [Niveles y Jefes](#-niveles-y-jefes)
+6. [Personajes Jugables (Skins)](#-personajes-jugables-skins)
+7. [Características del Juego](#-características-del-juego)
+8. [Arquitectura Técnica](#-arquitectura-técnica)
+9. [Especificación PWA](#-especificación-pwa)
+10. [Estructura del Proyecto](#-estructura-del-proyecto)
+11. [Tecnologías](#-tecnologías)
+12. [Licencia](#-licencia)
+
+---
+
+## 🎮 Cómo Jugar
+
+### Escritorio
+
+| Acción | Teclas |
+|--------|--------|
+| Mover | `←` `→` o `A` `D` |
+| Saltar | `↑` / `W` / `Espacio` |
+| Ataque rayo | `Z` |
+| Estrella ninja | `X` |
+| Dash | `Shift izq.` |
+| Pausar | `P` / `Escape` |
+| Música on/off | `M` / `1` |
+| SFX on/off | `S` / `2` |
+| Reiniciar nivel | `R` |
+| Confirmar | `Enter` |
+
+### Móvil
+
+En dispositivos táctiles se muestran controles en pantalla automáticamente.  
+El juego requiere **orientación horizontal (landscape)**.
+
+| Botón | ID HTML | Mapeo interno |
+|-------|---------|---------------|
+| ◀ Izquierda | `btn-left` | `ArrowLeft` |
+| ▶ Derecha | `btn-right` | `ArrowRight` |
+| ⬆ Salto | `btn-jump` | `Space` |
+| 💨 Dash | `btn-dash` | `ShiftLeft` |
+| ⚡ Rayo | `btn-z` | `KeyZ` |
+| ★ Estrella | `btn-x` | `KeyX` |
+| ❚❚ Pausa | `btn-pause` | `togglePause()` |
+| ▲ Bonus arriba | `btn-bonus-up` | `ArrowUp` |
+| ▼ Bonus abajo | `btn-bonus-down` | `ArrowDown` |
+
+---
+
+## 🔑 Códigos Secretos
+
+Permiten saltar directamente a cualquier nivel. Reinician vidas, score y monedas de sesión.
+
+### Desktop
+Escribir `N` seguido del número de nivel desde cualquier pantalla del juego.
+
+| Código | Destino |
+|--------|---------|
+| `N1` | Nivel 1 — Las Calles de Buenos Aires |
+| `N2` | Nivel 2 — El Basural Tóxico |
+| `N3` | Nivel 3 — La Dimensión Espejo |
+| `N4` | Nivel 4 — La Habitación Oscura |
+| `N5` | Nivel 5 — La Heladería Maldita |
+| `N6` | Nivel 6 — El Colegio del Ruido |
+| `N7` | Nivel 7 — La Escuela Poseída |
+| `N8` | Nivel 8 — El Consultorio Siniestro |
+| `N9` | Nivel 9 — La Dimensión Opaca |
+
+### Móvil
+**Tocar el logo / personaje / título 5 veces rápido** en la pantalla de inicio (menos de 700ms entre taps) abre un selector visual con botones N1–N9.
+
+---
+
+## 🚀 Iniciar el Juego
+
+1. Abrí el archivo `index.html` en cualquier navegador moderno.
+2. No necesita servidor, dependencias ni instalación.
+
+---
+
+## 📖 Historia
+
+En el planeta Crux, una estrella gigante que se apagó, todos los habitantes perecieron... todos menos uno. Sus padres lo lanzaron al espacio con una resortera gigante. Viajó por el cosmos hasta llegar a la Tierra, a Tacna, en Perú. A los 16 años escapó a Argentina y se convirtió en el superhéroe conocido como **¡Chico Estrella!**
+
+---
+
+## 🌍 Niveles y Jefes
+
+| # | Nombre | Jefe | Descripción del Jefe |
+|---|--------|------|----------------------|
+| 1 | Las Calles de Buenos Aires | Mocusón | Monstruo de mocos gigantes |
+| 2 | El Basural Tóxico | Romecio | Remera violeta sucia gigante cobró vida |
+| 3 | La Dimensión Espejo | El Cambia Formas | Chico Estrella de colores invertidos |
+| 4 | La Habitación Oscura | El Monstruo debajo de la cama | Criatura de las sombras |
+| 5 | La Heladería Maldita | Maelado | Villano helado |
+| 6 | El Colegio del Ruido | Timbroso | Villano del sonido |
+| 7 | La Escuela Poseída | P.E.J. 2.0 | Robot hipnotizador de estudiantes |
+| 8 | El Consultorio Siniestro | Larva Rayo | Psicóloga que implanta microchips en cerebros |
+| 9 | La Dimensión Opaca | Chico Opaco | Ser de pura oscuridad, antítesis del héroe |
+
+---
+
+## 🧑‍🚀 Personajes Jugables (Skins)
+
+| Skin | Precio | Función de dibujo |
+|------|--------|-------------------|
+| Chico Estrella | Gratis (default) | `drawChicoEstrella()` |
+| Chica Fugaz | 1000 monedas | `drawChicaFugaz()` |
+| Chico Luminoso | 2000 monedas | `drawChicoLuminoso()` |
+| Chico Invisible | 3000 monedas | `drawChicoInvisible()` |
+| Magnate | 4000 monedas | `drawMagnate()` |
+| Chico Goloso | 5000 monedas | `drawChicoGoloso()` |
+| Chico Imán | 5000 monedas | `drawChicoIman()` |
+| Chica Masa | 5000 monedas | `drawChicaMasa()` |
+
+Las skins se desbloquean en el **Mercado** del menú principal usando las monedas recolectadas.
+
+---
+
+## 🛠️ Características del Juego
+
+- **9 niveles** con temáticas visuales y narrativas únicas.
+- **Peleas contra jefes** al final de cada nivel.
+- **Historia narrada** entre niveles con cinemáticas de texto.
+- **Sistema de monedas** y tienda para desbloquear 8 skins.
+- **Códigos secretos** para saltar a cualquier nivel (teclado o selector táctil).
+- **Número de versión** visible en pantalla (esquina superior derecha) para verificar la versión en producción.
+- **Power-ups:** vuelo (float al mantener salto) y tamaño gigante.
+- **Nivel bonus** de recolección de monedas.
+- **Tutorial** integrado.
+- **Combo system** con multiplicador.
+- **Checkpoints** dentro de cada nivel.
+- **5 vidas** por partida.
+- **Camera shake** y screen flash como feedback visual.
+- **Sistema de transiciones** con fade in/out entre pantallas.
+- **Motor de audio procedural** (efectos y música generados con Web Audio API).
+- **Progreso persistente** con `localStorage`.
+- **Responsive:** soporte completo para escritorio y móvil.
+
+---
+
+## 🏗️ Arquitectura Técnica
+
+### Archivo único
+
+Todo el juego reside en `index.html` con HTML + CSS + JS inline.  
+No hay dependencias externas de ningún tipo.
+
+### Máquina de estados del juego
+
+```
+Variable: gameState (string)
+
+Estados posibles:
+┌─────────────────────────────────────────────────────────┐
+│ title        → Menú principal (Jugar, Nivel de Prueba,  │
+│                 Ajustes, Mercado)                        │
+│ settings     → Pantalla de ajustes (música/SFX)         │
+│ market       → Tienda de skins                          │
+│ story        → Cinemática narrativa antes de cada nivel  │
+│ tutorial     → Nivel tutorial                           │
+│ playing      → Gameplay normal                          │
+│ bossFight    → Pelea contra jefe                        │
+│ bonus        → Nivel bonus de monedas                   │
+│ levelComplete→ Pantalla de nivel completado             │
+│ gameOver     → Pantalla de game over                    │
+│ victory      → Victoria final                           │
+│ paused       → Menú de pausa (con sub-estado de         │
+│                 confirmación para reiniciar/salir)       │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Variables de soporte:**
+- `previousState` — estado antes de pausar
+- `pauseConfirm` — `null`, `'title'` o `'restart'` para confirmación destructiva
+
+### Canvas y renderizado
+
+| Propiedad | Valor |
+|-----------|-------|
+| Ancho base | 960 px |
+| Alto base | 540 px |
+| Aspect ratio | 16:9 |
+| Renderizado | `image-rendering: pixelated` |
+| Contexto | `canvas.getContext('2d')` |
+
+**Escalado responsive:**
+- **Desktop:** centra el canvas, mantiene aspect ratio, border dorado `#FFD700`.
+- **Mobile:** `position: fixed`, sin borde, llena el viewport completo.
+- Se recalcula en eventos `resize` y `orientationchange` vía `resizeCanvas()`.
+
+### Game loop (timestep fijo)
+
+```javascript
+const FIXED_DT = 1000 / 60;   // ~16.67ms por tick lógico (60 FPS)
+
+gameLoop(timestamp) {
+  elapsed = timestamp - lastTime;  // clampeado a 200ms máx.
+  while (accumulator >= FIXED_DT) {
+    update();                      // lógica de juego
+    accumulator -= FIXED_DT;
+  }
+  draw();                          // render
+  requestAnimationFrame(gameLoop);
+}
+```
+
+### Sistema de audio
+
+Todo el audio es **procedural** usando Web Audio API (no hay archivos de audio).
+
+| Componente | Detalle |
+|------------|---------|
+| Contexto | `AudioContext` / `webkitAudioContext`, lazy init |
+| Inicialización | `ensureAudio()` en primer gesto de usuario |
+| SFX | `playSound(freq, duration, type, volume)` con osciladores |
+| Música | Secuenciador con `setInterval` de 200ms y look-ahead |
+| Melodía | Oscilador `'square'`, 26 notas programadas |
+| Bajo | Oscilador `'triangle'`, 16 notas |
+| Flags | `musicEnabled`, `sfxEnabled`, `musicPlaying` |
+
+**Efectos de sonido:**
+
+| Función | Uso |
+|---------|-----|
+| `sfxJump()` | Salto (400→600 Hz) |
+| `sfxHit()` | Daño recibido (200 Hz sawtooth) |
+| `sfxCoin()` | Recoger moneda (800→1200 Hz) |
+| `sfxBossHit()` | Golpear jefe (150 Hz sawtooth) |
+| `sfxDeath()` | Muerte (300→200→100 Hz secuencia) |
+| `sfxWin()` | Victoria (5 notas ascendentes) |
+| `sfxAttack()` | Ataque rayo (300→500 Hz) |
+| `sfxLaser()` | Láser (900→1100 Hz) |
+| `sfxNinjaStar()` | Estrella ninja (600→800 Hz triangle) |
+
+### Persistencia (localStorage)
+
+| Clave | Tipo | Descripción |
+|-------|------|-------------|
+| `chicoEstrella_totalCoins` | `int` | Monedas totales acumuladas |
+| `chicoEstrella_selectedSkin` | `int` (0-7) | Skin actualmente seleccionada |
+| `chicoEstrella_unlockedSkins` | `JSON bool[]` | Skins desbloqueadas `[true, false, ...]` |
+
+**Función de guardado:** `saveMarketData()`
+
+### Sistema de versiones
+
+```javascript
+const GAME_VERSION = '1.0';  // formato 1.x, se incrementa en cada deploy
+```
+
+- Se muestra en la esquina superior derecha en todas las pantallas.
+- Color: `#FFD700` (amarillo), `bold 20px Arial`.
+- Permite verificar desde el celular que se está viendo la versión más reciente.
+- Formato: `1.0` → `1.1` → ... → `1.9` → `2.0`
+
+### Detección de dispositivo
+
+```javascript
+const isMobileEarly = ('ontouchstart' in window) ||
+                      navigator.maxTouchPoints > 0 ||
+                      window.matchMedia('(pointer: coarse)').matches;
+```
+
+Usado para:
+- Mostrar/ocultar controles táctiles
+- Saltar efectos costosos (gradientes radiales, afterimage del dash)
+- Ajustar tamaño de botones táctiles
+- Activar fullscreen automático
+
+### Event listeners registrados
+
+| Evento | Target | Propósito |
+|--------|--------|-----------|
+| `keydown` / `keyup` | `window` | Input teclado (movimiento + códigos secretos) |
+| `touchstart` / `touchend` / `touchcancel` | Botones táctiles | Controles mobile |
+| `mousedown` / `mouseup` / `mouseleave` | Botones táctiles | Fallback mouse |
+| `touchstart` | `canvas` | Menús mobile + 5-tap para level picker |
+| `click` | `canvas` | Menús desktop + level picker |
+| `resize` | `window` | Recalcular canvas + orientación |
+| `orientationchange` | `window` | Detectar rotación (con delay) |
+| `touchstart` / `click` | `document` | Trigger fullscreen (once) |
+
+### Optimizaciones mobile
+
+- Gradientes radiales desactivados en mobile.
+- Efecto afterimage del dash desactivado en mobile.
+- Botones táctiles escalan con viewport: `Math.max(52, Math.min(vh * 0.11, 72))`.
+- Soporte de safe area insets: `env(safe-area-inset-top)`.
+- Clampeo de elapsed time a 200ms para evitar "spiral of death" al cambiar de pestaña.
+
+---
+
+## 📱 Especificación PWA
+
+### Resumen de viabilidad
+
+| Requisito | Estado |
+|-----------|--------|
+| Archivo único sin dependencias externas | ✅ Cumple |
+| Sin assets externos (todo dibujado con Canvas) | ✅ Cumple |
+| Funciona offline | ✅ Cumple |
+| Responsive y mobile-first | ✅ Cumple |
+| Controles táctiles implementados | ✅ Cumple |
+| Persistencia local | ✅ Cumple (localStorage) |
+| Desplegado en Firebase Hosting | ✅ https://chico-estrella-pwa.web.app |
+
+### Service Worker (`sw.js`)
+
+- Estrategia **network-first**: siempre busca la versión nueva, usa cache como fallback offline.
+- Cache actual: `chico-estrella-v22`
+- Firebase sirve `sw.js` e `index.html` con `Cache-Control: no-cache` para garantizar actualizaciones inmediatas.
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+JuegoChicoEstrellaPWA/
+├── index.html                          # Juego completo (HTML + CSS + JS)
+├── manifest.json                       # Web App Manifest
+├── sw.js                               # Service Worker (cache v22)
+├── firebase.json                       # Configuración Firebase Hosting
+├── README.md                           # Este archivo
+├── icons/
+│   ├── icon-192.png                    # Ícono 192×192
+│   └── icon-512.png                    # Ícono 512×512
+├── screenshots/
+│   └── gameplay.png                    # Screenshot para manifest
+├── Chico Estrella.png
+├── Chica Fugaz.png
+├── Chico Luminoso.png
+├── Chico Invisible.png
+├── Magnate.png
+├── Chico Goloso.png
+├── Chico Imán.png
+├── Chica Masa.png
+├── Mocuson.png                         # Arte del jefe - Nivel 1
+├── Romecio.png                         # Arte del jefe - Nivel 2
+├── Cambia Forma.png                    # Arte del jefe - Nivel 3
+├── Monstruo debajo de la cama.png      # Arte del jefe - Nivel 4
+├── Maelado.png                         # Arte del jefe - Nivel 5
+├── Timbroso.png                        # Arte del jefe - Nivel 6
+├── P.E.J. 2.0.png                      # Arte del jefe - Nivel 7
+├── Larva Rayo.png                      # Arte del jefe - Nivel 8
+└── Microchip malvado.png               # Arte del jefe - Nivel 9
+```
+
+---
+
+## 🧰 Tecnologías
+
+- **HTML5 Canvas** — renderizado 2D completo
+- **JavaScript vanilla ES6+** — sin frameworks ni librerías
+- **Web Audio API** — audio procedural (música y SFX)
+- **localStorage** — persistencia de datos del jugador
+- **Fullscreen API** — inmersión completa
+- **Screen Orientation API** — forzar landscape
+- **Service Worker** — cache offline para PWA con auto-actualización
+- **Web App Manifest** — instalabilidad PWA
+- **Firebase Hosting** — deploy y CDN en producción
+
+---
+
+## 📜 Licencia
+
+Proyecto personal. Todos los derechos reservados.
+
+
+Un juego de plataformas 2D creado íntegramente con HTML5 Canvas y JavaScript vanilla.  
 Acompaña a Chico Estrella en su misión de proteger Buenos Aires de villanos únicos a lo largo de 6 niveles temáticos.
 
 ---
