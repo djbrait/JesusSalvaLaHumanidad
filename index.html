@@ -340,7 +340,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = 'v1';
+const GAME_VERSION = '1.0';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -6695,10 +6695,10 @@ function draw() {
 
     // Version number (always visible top-right)
     ctx.save();
-    ctx.font = '11px Arial';
+    ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillText(GAME_VERSION, canvas.width - 6, 14);
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(`v${GAME_VERSION}`, canvas.width - 8, 24);
     ctx.restore();
 
     // Secret code feedback
