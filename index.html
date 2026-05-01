@@ -6293,6 +6293,10 @@ canvas.addEventListener('touchstart', (e) => {
             }
         }
     } else if (gameState === 'paused') {
+        if (pauseInputDelay > 0) return;
+        if (pauseConfirm) {
+            // Check which confirm button was touched (SÍ or NO)
+            for (const btn of pauseConfirmBtns) {
                 if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
                     if (btn.action === 'yes') {
                         executePauseAction(pauseConfirm);
