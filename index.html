@@ -436,7 +436,7 @@ window.addEventListener('keydown', e => {
             score = 0;
             lives = MAX_LIVES;
             sessionCoins = 0;
-            fadeOut(() => { startLevel(levelNum); });
+            fadeOut(() => { startLevel(levelNum); fadeIn(); });
         }
     }
 });
