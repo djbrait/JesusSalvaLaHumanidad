@@ -415,6 +415,32 @@ window.addEventListener('keydown', e => {
     if (e.code === 'KeyP') togglePause();
 });
 
+// ---- SECRET LEVEL CODES ----
+let secretBuffer = '';
+let secretCodeTimer = 0; // frames to show feedback
+let secretCodeMsg = '';
+
+window.addEventListener('keydown', e => {
+    // Solo capturar teclas de un carácter
+    if (e.key.length !== 1) return;
+    secretBuffer += e.key.toUpperCase();
+    if (secretBuffer.length > 2) secretBuffer = secretBuffer.slice(-2);
+
+    const match = secretBuffer.match(/^N([1-9])$/);
+    if (match) {
+        const levelNum = parseInt(match[1]) - 1; // N1 → nivel 0, N9 → nivel 8
+        if (levelNum < LEVEL_THEMES.length) {
+            secretBuffer = '';
+            secretCodeMsg = `★ NIVEL ${levelNum + 1} ★`;
+            secretCodeTimer = 120;
+            score = 0;
+            lives = MAX_LIVES;
+            sessionCoins = 0;
+            fadeOut(() => { startLevel(levelNum); });
+        }
+    }
+});
+
 // ---- CAMERA ----
 let camera = { x: 0, y: 0 };
 
@@ -6648,7 +6674,23 @@ function draw() {
         ctx.fillStyle = `rgba(0,0,0,${transitionAlpha})`;
         ctx.fillRect(-10, -10, canvas.width + 20, canvas.height + 20);
     }
-    
+
+    // Secret code feedback
+    if (secretCodeTimer > 0) {
+        secretCodeTimer--;
+        const alpha = Math.min(1, secretCodeTimer / 20);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = 'bold 28px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 4;
+        ctx.strokeText(secretCodeMsg, canvas.width / 2, canvas.height / 2);
+        ctx.fillStyle = '#FFD700';
+        ctx.fillText(secretCodeMsg, canvas.width / 2, canvas.height / 2);
+        ctx.restore();
+    }
+
     ctx.restore();
 }
 
