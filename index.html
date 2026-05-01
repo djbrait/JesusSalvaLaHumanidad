@@ -412,17 +412,6 @@ function togglePause() {
 }
 window.addEventListener('keydown', e => {
     if (e.code === 'KeyP') togglePause();
-    // DEV SHORTCUT: Shift+9 → skip to level 9 boss fight instantly
-    if (e.shiftKey && e.code === 'Digit9') {
-        gameState = 'playing';
-        startLevel(8); // level 9 (0-indexed)
-        // Teleport player near boss zone
-        const lvl = levels[8];
-        player.x = lvl.bossZone - 200;
-        player.y = 300;
-        player.dead = false;
-        player.hp = player.maxHp;
-    }
 });
 
 // ---- CAMERA ----
@@ -6996,19 +6985,14 @@ function drawTitleScreen() {
         keys['Enter'] = false;
         ensureAudio();
         if (titleSelection === 0) {
-            // JUGAR — DEV: skip directo a nivel 9 boss
+            // JUGAR
             storyIndex = 0;
-            currentLevel = 8;
+            currentLevel = 0;
             lives = MAX_LIVES;
             score = 0;
-            savedCheckpoint = { level: 8, score: 0, x: 80 };
+            savedCheckpoint = { level: 0, score: 0, x: 80 };
             fadeOut(() => {
-                startLevel(8);
-                const lvl = levels[8];
-                player.x = lvl.bossZone - 200;
-                player.y = 300;
-                player.dead = false;
-                player.hp = player.maxHp;
+                gameState = 'story';
                 fadeIn();
             });
         } else if (titleSelection === 1) {
