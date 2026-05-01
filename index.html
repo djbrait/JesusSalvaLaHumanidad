@@ -169,6 +169,8 @@ function sfxWin() { [0,100,200,300,400].forEach((d,i) => setTimeout(() => playSo
 function sfxAttack() { playSound(300, 0.08, 'sawtooth', 0.12); setTimeout(() => playSound(500, 0.08, 'sawtooth', 0.1), 40); }
 function sfxLaser() { playSound(900, 0.12, 'sawtooth', 0.1); setTimeout(() => playSound(1100, 0.08, 'sawtooth', 0.08), 30); }
 function sfxNinjaStar() { playSound(600, 0.1, 'triangle', 0.1); setTimeout(() => playSound(800, 0.08, 'triangle', 0.08), 50); }
+function sfxFire() { playSound(200, 0.15, 'sawtooth', 0.12); setTimeout(() => playSound(350, 0.1, 'sawtooth', 0.1), 40); setTimeout(() => playSound(250, 0.12, 'sawtooth', 0.08), 80); }
+function sfxIce() { playSound(900, 0.12, 'sine', 0.1); setTimeout(() => playSound(1200, 0.1, 'sine', 0.08), 50); setTimeout(() => playSound(700, 0.08, 'sine', 0.06), 90); }
 
 // ---- MUSIC ENGINE ----
 let musicPlaying = false;
@@ -351,9 +353,9 @@ let sfxEnabled = true;
 // ---- MARKET / SHOP ----
 let totalCoins = parseInt(localStorage.getItem('chicoEstrella_totalCoins')) || 0;
 let selectedSkin = parseInt(localStorage.getItem('chicoEstrella_selectedSkin')) || 0;
-let unlockedSkins = JSON.parse(localStorage.getItem('chicoEstrella_unlockedSkins')) || [true, false, false, false];
-// Ensure array has 4 entries for existing users
-while (unlockedSkins.length < 4) unlockedSkins.push(false);
+let unlockedSkins = JSON.parse(localStorage.getItem('chicoEstrella_unlockedSkins')) || [true, false, false, false, false];
+// Ensure array has 5 entries for existing users
+while (unlockedSkins.length < 5) unlockedSkins.push(false);
 let marketSelection = 0;
 let marketButtons = [];
 
@@ -446,7 +448,7 @@ const LEVEL_THEMES = [
     { name: 'El Colegio del Ruido', sky1: '#8B4513', sky2: '#D2691E', ground: '#654321', platform: '#8B6914', accent: '#FFD700' }
 ];
 
-const SKIN_NAMES = ['Chico Estrella', 'Chica Fugaz', 'Chico Luminoso', 'Chico Invisible'];
+const SKIN_NAMES = ['Chico Estrella', 'Chica Fugaz', 'Chico Luminoso', 'Chico Invisible', 'Magnate'];
 
 const STORIES = [
     [
@@ -1697,6 +1699,218 @@ function drawChicoInvisible(x, y, w, h, facing, animFrame, attacking, invincible
     ctx.restore();
 }
 
+function drawShuriken(cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+        const angle = (Math.PI / 2) * i;
+        const tipX = cx + Math.cos(angle) * r;
+        const tipY = cy + Math.sin(angle) * r;
+        const leftA = angle - 0.5;
+        const rightA = angle + 0.5;
+        const innerR = r * 0.25;
+        if (i === 0) ctx.moveTo(cx + Math.cos(leftA) * innerR, cy + Math.sin(leftA) * innerR);
+        else ctx.lineTo(cx + Math.cos(leftA) * innerR, cy + Math.sin(leftA) * innerR);
+        ctx.lineTo(tipX, tipY);
+        ctx.lineTo(cx + Math.cos(rightA) * innerR, cy + Math.sin(rightA) * innerR);
+    }
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawMagnate(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
+    if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
+    ctx.save();
+    ctx.translate(x + w/2, y + h/2);
+    if (facing < 0) ctx.scale(-1, 1);
+    const cx = -w/2, cy = -h/2;
+
+    const orangeColor = '#FF8C00';
+    const blueColor = '#87CEEB';
+    const suitColor = '#4B0082';
+    const capeColor = '#FF8C00';
+    const bootColorL = '#FF8C00';
+    const bootColorR = '#87CEEB';
+
+    // Cape (orange, behind body)
+    ctx.fillStyle = capeColor;
+    ctx.beginPath();
+    const capeWave = Math.sin(animFrame * 0.15) * 3;
+    ctx.moveTo(cx + w * 0.3, cy + h * 0.3);
+    ctx.quadraticCurveTo(cx - 10 + capeWave, cy + h * 0.6, cx - 7 + capeWave, cy + h * 0.85);
+    ctx.lineTo(cx + w * 0.15, cy + h * 0.85);
+    ctx.quadraticCurveTo(cx - 5 + capeWave, cy + h * 0.55, cx + w * 0.2, cy + h * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#CC6600';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Body (purple suit)
+    ctx.fillStyle = suitColor;
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.33, w * 0.6, h * 0.35);
+    ctx.strokeStyle = '#2E0054';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx + w * 0.2, cy + h * 0.33, w * 0.6, h * 0.35);
+
+    // V-neck pattern on suit
+    ctx.strokeStyle = blueColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.28, cy + h * 0.33);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.55);
+    ctx.lineTo(cx + w * 0.72, cy + h * 0.33);
+    ctx.stroke();
+    // Diamond on chest
+    ctx.fillStyle = '#6A5ACD';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.5, cy + h * 0.40);
+    ctx.lineTo(cx + w * 0.55, cy + h * 0.46);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.52);
+    ctx.lineTo(cx + w * 0.45, cy + h * 0.46);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#9370DB';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Legs with walking animation
+    const legSwing = isRunning ? Math.sin(animFrame * 0.35) * 12 : 0;
+    // Left leg (orange)
+    ctx.fillStyle = suitColor;
+    ctx.save();
+    ctx.translate(cx + w * 0.33, cy + h * 0.65);
+    ctx.rotate(legSwing * Math.PI / 180 * 2);
+    ctx.fillRect(-w * 0.11, 0, w * 0.22, h * 0.22);
+    ctx.fillStyle = bootColorL;
+    ctx.fillRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
+    ctx.restore();
+    // Right leg (blue)
+    ctx.fillStyle = suitColor;
+    ctx.save();
+    ctx.translate(cx + w * 0.67, cy + h * 0.65);
+    ctx.rotate(-legSwing * Math.PI / 180 * 2);
+    ctx.fillRect(-w * 0.11, 0, w * 0.22, h * 0.22);
+    ctx.fillStyle = bootColorR;
+    ctx.fillRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
+    ctx.restore();
+
+    // Belt (purple)
+    ctx.fillStyle = '#6A0DAD';
+    ctx.fillRect(cx + w * 0.18, cy + h * 0.62, w * 0.64, h * 0.06);
+    ctx.fillStyle = '#9370DB';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.5, cy + h * 0.62);
+    ctx.lineTo(cx + w * 0.54, cy + h * 0.65);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.68);
+    ctx.lineTo(cx + w * 0.46, cy + h * 0.65);
+    ctx.closePath();
+    ctx.fill();
+
+    // Arms
+    const armAngle = attacking ? -0.8 : Math.sin(animFrame * 0.15) * 0.3;
+    // Right arm (blue skin)
+    ctx.fillStyle = suitColor;
+    ctx.save();
+    ctx.translate(cx + w * 0.75, cy + h * 0.38);
+    ctx.rotate(armAngle);
+    ctx.fillRect(0, -3, 14, 6);
+    ctx.fillStyle = blueColor;
+    ctx.fillRect(12, -4, 6, 8);
+    ctx.restore();
+    // Left arm (orange skin)
+    ctx.fillStyle = suitColor;
+    ctx.save();
+    ctx.translate(cx + w * 0.25, cy + h * 0.38);
+    ctx.rotate(-armAngle * 0.5);
+    ctx.fillRect(-14, -3, 14, 6);
+    ctx.fillStyle = orangeColor;
+    ctx.fillRect(-18, -4, 6, 8);
+    ctx.restore();
+
+    // Head - split face (orange left, blue right)
+    const headW = w * 0.7;
+    const headH = h * 0.28;
+    const headX = cx + w * 0.15;
+    const headY = cy + h * 0.05;
+    // Left half (orange)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(headX, headY, headW / 2, headH);
+    ctx.clip();
+    ctx.fillStyle = orangeColor;
+    ctx.fillRect(headX, headY, headW, headH);
+    ctx.restore();
+    // Right half (blue)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(headX + headW / 2, headY, headW / 2, headH);
+    ctx.clip();
+    ctx.fillStyle = blueColor;
+    ctx.fillRect(headX, headY, headW, headH);
+    ctx.restore();
+
+    // Pointed ears
+    ctx.fillStyle = orangeColor;
+    ctx.beginPath();
+    ctx.moveTo(headX, headY + headH * 0.1);
+    ctx.lineTo(headX - w * 0.08, headY - headH * 0.2);
+    ctx.lineTo(headX + w * 0.05, headY + headH * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = blueColor;
+    ctx.beginPath();
+    ctx.moveTo(headX + headW, headY + headH * 0.1);
+    ctx.lineTo(headX + headW + w * 0.08, headY - headH * 0.2);
+    ctx.lineTo(headX + headW - w * 0.05, headY + headH * 0.3);
+    ctx.closePath();
+    ctx.fill();
+
+    // Eyes (slanted, menacing)
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.28, cy + h * 0.12);
+    ctx.lineTo(cx + w * 0.42, cy + h * 0.10);
+    ctx.lineTo(cx + w * 0.42, cy + h * 0.18);
+    ctx.lineTo(cx + w * 0.28, cy + h * 0.16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.58, cy + h * 0.10);
+    ctx.lineTo(cx + w * 0.72, cy + h * 0.12);
+    ctx.lineTo(cx + w * 0.72, cy + h * 0.16);
+    ctx.lineTo(cx + w * 0.58, cy + h * 0.18);
+    ctx.closePath();
+    ctx.fill();
+    // Pupils
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx + w * 0.35, cy + h * 0.12, 3, 5);
+    ctx.fillRect(cx + w * 0.62, cy + h * 0.12, 3, 5);
+
+    // Smirk
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.38, cy + h * 0.26);
+    ctx.quadraticCurveTo(cx + w * 0.5, cy + h * 0.30, cx + w * 0.65, cy + h * 0.24);
+    ctx.stroke();
+
+    // Fire/ice glow when attacking
+    if (attacking) {
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = '#FF4500';
+        ctx.beginPath();
+        ctx.arc(cx + w * 0.25, cy + h * 0.45, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#00BFFF';
+        ctx.beginPath();
+        ctx.arc(cx + w * 0.75, cy + h * 0.45, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+}
+
 function drawPlayerCharacter(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
     if (selectedSkin === 1 && unlockedSkins[1]) {
         drawChicaFugaz(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
@@ -1704,6 +1918,8 @@ function drawPlayerCharacter(x, y, w, h, facing, animFrame, attacking, invincibl
         drawChicoLuminoso(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     } else if (selectedSkin === 3 && unlockedSkins[3]) {
         drawChicoInvisible(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
+    } else if (selectedSkin === 4 && unlockedSkins[4]) {
+        drawMagnate(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     } else {
         drawChicoEstrella(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     }
@@ -3550,7 +3766,7 @@ function updatePlayer() {
         }
     }
     
-    // Z Attack: Eye laser / Chico Invisible: lanza un yunque
+    // Z Attack: Eye laser / Chico Invisible: lanza un yunque / Magnate: rayo de fuego
     if (player.attackCooldown > 0) player.attackCooldown--;
     if ((isKeyDown('KeyZ') || isKeyDown('KeyJ')) && player.attackCooldown === 0) {
         if (selectedSkin === 3 && unlockedSkins[3]) {
@@ -3571,6 +3787,24 @@ function updatePlayer() {
                 damage: isGiant ? 4 : 2,
                 w: isGiant ? 28 : 20, h: isGiant ? 28 : 20,
                 rotation: 0
+            });
+        } else if (selectedSkin === 4 && unlockedSkins[4]) {
+            // Magnate: rayo de fuego por las manos al enemigo más cercano
+            player.attacking = true;
+            player.attackTimer = 15;
+            player.attackCooldown = 6;
+            sfxFire();
+            const isGiant = player.giantTimer > 0;
+            const aim = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim.dx >= 0 ? player.w + 2 : -12),
+                y: player.y + player.h * 0.35,
+                vx: aim.dx * 9,
+                vy: aim.dy * 9,
+                type: 'fireRay',
+                life: 45,
+                damage: isGiant ? 3 : 2,
+                w: isGiant ? 30 : 18, h: isGiant ? 10 : 6
             });
         } else {
             player.attacking = true;
@@ -3596,7 +3830,7 @@ function updatePlayer() {
         if (player.attackTimer === 0) player.attacking = false;
     }
     
-    // X Attack: Ninja star / Chico Invisible: alternar visibilidad
+    // X Attack: Ninja star / Chico Invisible: alternar visibilidad / Magnate: rayo de hielo
     if (player.invisibleToggleCooldown > 0) player.invisibleToggleCooldown--;
     if (selectedSkin === 3 && unlockedSkins[3]) {
         // Chico Invisible: X alterna visibilidad
@@ -3615,6 +3849,25 @@ function updatePlayer() {
             }
         } else {
             player._xTogglePressed = false;
+        }
+    } else if (selectedSkin === 4 && unlockedSkins[4]) {
+        // Magnate: rayo de hielo por las manos al enemigo más cercano
+        if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.starPower >= 20 && player.attackCooldown === 0) {
+            player.starPower -= 20;
+            player.attackCooldown = 8;
+            sfxIce();
+            const isGiant2 = player.giantTimer > 0;
+            const aim2 = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim2.dx >= 0 ? player.w + 2 : -12),
+                y: player.y + player.h * 0.35,
+                vx: aim2.dx * 8,
+                vy: aim2.dy * 8,
+                type: 'iceRay',
+                life: 50,
+                damage: isGiant2 ? 4 : 2,
+                w: isGiant2 ? 28 : 16, h: isGiant2 ? 10 : 6
+            });
         }
     } else if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.starPower >= 20 && player.attackCooldown === 0) {
         player.starPower -= 20;
@@ -3702,7 +3955,7 @@ function updateEnemies() {
                 e.alive = false;
                 score += 100;
                 sfxBossHit();
-                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : '#FFD700', 8);
+                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : '#FFD700', 8);
                 player.starPower = Math.min(player.maxStarPower, player.starPower + 10);
                 spawnDrop(e.x + e.w/2, e.y + e.h/2);
                 addCombo();
@@ -4210,7 +4463,7 @@ function updateBoss() {
             sfxBossHit();
             shakeTimer = 5;
             shakeIntensity = 3;
-            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : '#FFD700', 6);
+            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : '#FFD700', 6);
             score += 50;
             screenFlash = { timer: 4, color: '#FFD700' };
             playerProjectiles.splice(pi, 1);
@@ -4289,14 +4542,14 @@ function drawPlayerProjectiles() {
             ctx.fillRect(sx + 2, p.y + 1, p.w - 4, 2);
             ctx.restore();
         } else if (p.type === 'ninjaStar') {
-            // Yellow spinning ninja star
+            // Yellow spinning ninja shuriken
             ctx.save();
             ctx.translate(sx + p.w/2, p.y + p.h/2);
             ctx.rotate(p.rotation);
             ctx.fillStyle = '#FFD700';
-            drawStar(0, 0, 10, 4, 5);
+            drawShuriken(0, 0, 10);
             ctx.fillStyle = '#FFA000';
-            drawStar(0, 0, 5, 2, 5);
+            drawShuriken(0, 0, 4);
             ctx.restore();
         } else if (p.type === 'hammer') {
             // Spinning hammer projectile
@@ -4313,6 +4566,41 @@ function drawPlayerProjectiles() {
             // Shine
             ctx.fillStyle = 'rgba(255,255,255,0.3)';
             ctx.fillRect(-hw*0.2, -hh*0.45, hw*0.15, hh*0.2);
+            ctx.restore();
+        } else if (p.type === 'fireRay') {
+            // Orange/red fire ray from hands
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#FF4500';
+            ctx.fillRect(sx - 2, p.y - 3, p.w + 4, p.h + 6);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#FF6600';
+            ctx.fillRect(sx, p.y, p.w, p.h);
+            ctx.fillStyle = '#FFAA00';
+            ctx.fillRect(sx + 2, p.y + 1, p.w - 4, Math.max(1, p.h - 2));
+            // Flickering flame tips
+            const flicker = Math.sin(Date.now() * 0.02) * 2;
+            ctx.fillStyle = '#FF2200';
+            ctx.fillRect(sx + p.w - 4, p.y - 1 + flicker, 4, p.h + 2);
+            ctx.restore();
+        } else if (p.type === 'iceRay') {
+            // Blue/cyan ice ray from hands
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#00BFFF';
+            ctx.fillRect(sx - 2, p.y - 3, p.w + 4, p.h + 6);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#00CED1';
+            ctx.fillRect(sx, p.y, p.w, p.h);
+            ctx.fillStyle = '#E0FFFF';
+            ctx.fillRect(sx + 2, p.y + 1, p.w - 4, Math.max(1, p.h - 2));
+            // Ice crystal sparkle
+            ctx.fillStyle = '#fff';
+            const sparkle = Math.sin(Date.now() * 0.03) > 0 ? 1 : 0;
+            if (sparkle) {
+                ctx.fillRect(sx + p.w * 0.3, p.y - 1, 2, 2);
+                ctx.fillRect(sx + p.w * 0.7, p.y + p.h - 1, 2, 2);
+            }
             ctx.restore();
         }
     }
@@ -4399,8 +4687,8 @@ function startTutorial() {
         { x: 700,  text: '↑ o ESPACIO (2 veces)\n   ¡Salto doble!\n   Saltá y volvé a saltar en el aire', icon: '🔄' },
         { x: 950,  text: '↑ / ESPACIO + ← / →\n   Saltar y moverse en el aire\n   ¡Probá saltar entre plataformas!', icon: '🌀' },
         { x: 1350, text: 'Mayús\n   Volar muy rápido por 1 segundo\n   ¡Probalo!', icon: 'Mayús' },
-        { x: 1600, text: 'Z\n   Lanzar rayo verde por los ojos\n   ¡Apuntá al frente!', icon: 'Z' },
-        { x: 1850, text: 'X\n   Lanzar estrellas ninja\n   ¡Giratorias y poderosas!', icon: 'X' },
+        { x: 1600, text: selectedSkin === 4 ? 'Z\n   Lanzar rayo de FUEGO por las manos\n   ¡Al enemigo más cercano!' : selectedSkin === 3 ? 'Z\n   Lanzar martillos al enemigo\n   ¡Dirigidos automáticamente!' : 'Z\n   Lanzar rayo verde por los ojos\n   ¡Apuntá al frente!', icon: 'Z' },
+        { x: 1850, text: selectedSkin === 4 ? 'X\n   Lanzar rayo de HIELO por las manos\n   ¡Congela enemigos!' : selectedSkin === 3 ? 'X\n   Alternar visibilidad\n   ¡Hacete visible/invisible!' : 'X\n   Lanzar estrellas ninja\n   ¡Giratorias y poderosas!', icon: 'X' },
         { x: 2100, text: 'PARED + ↑\n   ¡Salto de pared!\n   Deslizate y saltá entre paredes', icon: '🧱' },
         { x: 2550, text: 'ANILLO LAPISLÁZULI →\n   ¡Te hace GIGANTE!\n   Tocá el anillo azul', icon: '💎' },
         { x: 2900, text: 'ANILLO ESPIRAL →\n   ¡Podés VOLAR!\n   Tocá el anillo violeta', icon: '🌀' },
@@ -4503,10 +4791,9 @@ function drawTutorial() {
             ctx.translate(sx + p.w/2, p.y + p.h/2);
             ctx.rotate(p.rotation);
             ctx.fillStyle = '#FFD700';
-            for (let i = 0; i < 4; i++) {
-                ctx.fillRect(-2, -8, 4, 16);
-                ctx.rotate(Math.PI/4);
-            }
+            drawShuriken(0, 0, 8);
+            ctx.fillStyle = '#FFA000';
+            drawShuriken(0, 0, 3);
             ctx.restore();
         } else if (p.type === 'hammer') {
             ctx.save();
@@ -4516,6 +4803,24 @@ function drawTutorial() {
             ctx.fillRect(-p.w*0.08, -p.h*0.05, p.w*0.16, p.h*0.55);
             ctx.fillStyle = '#888';
             ctx.fillRect(-p.w*0.35, -p.h*0.5, p.w*0.7, p.h*0.35);
+            ctx.restore();
+        } else if (p.type === 'fireRay') {
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#FF4500';
+            ctx.fillRect(sx - 1, p.y - 2, p.w + 2, p.h + 4);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#FF6600';
+            ctx.fillRect(sx, p.y, p.w, p.h);
+            ctx.restore();
+        } else if (p.type === 'iceRay') {
+            ctx.save();
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#00BFFF';
+            ctx.fillRect(sx - 1, p.y - 2, p.w + 2, p.h + 4);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#00CED1';
+            ctx.fillRect(sx, p.y, p.w, p.h);
             ctx.restore();
         }
     }
@@ -4744,7 +5049,7 @@ function draw() {
 }
 
 function handleMarketAction() {
-    const skinPrices = [0, 1000, 2000, 3000];
+    const skinPrices = [0, 1000, 2000, 3000, 4000];
     const i = marketSelection;
     if (i >= SKIN_NAMES.length) return;
     if (unlockedSkins[i]) {
@@ -4761,11 +5066,11 @@ function handleMarketAction() {
 function updateMarket() {
     if (keys['ArrowLeft']) {
         keys['ArrowLeft'] = false;
-        marketSelection = (marketSelection + 3) % 4;
+        marketSelection = (marketSelection + 4) % 5;
     }
     if (keys['ArrowRight']) {
         keys['ArrowRight'] = false;
-        marketSelection = (marketSelection + 1) % 4;
+        marketSelection = (marketSelection + 1) % 5;
     }
     if (keys['Enter']) {
         keys['Enter'] = false;
@@ -4780,8 +5085,8 @@ function updateMarket() {
 function drawMarketScreen() {
     const t = Date.now() / 1000;
     const skinNames = SKIN_NAMES;
-    const skinPrices = [0, 1000, 2000, 3000];
-    const skinDrawFns = [drawChicoEstrella, drawChicaFugaz, drawChicoLuminoso, drawChicoInvisible];
+    const skinPrices = [0, 1000, 2000, 3000, 4000];
+    const skinDrawFns = [drawChicoEstrella, drawChicaFugaz, drawChicoLuminoso, drawChicoInvisible, drawMagnate];
 
     // Background - supermarket theme
     const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -4830,8 +5135,8 @@ function drawMarketScreen() {
     ctx.fillText('⭐ ' + totalCoins, canvas.width - 25, 40);
 
     // Character cards
-    const numSkins = 4;
-    const cardW = 140, cardH = 300;
+    const numSkins = 5;
+    const cardW = 120, cardH = 300;
     const gap = 18;
     const totalW = cardW * numSkins + gap * (numSkins - 1);
     const startX = (canvas.width - totalW) / 2;
@@ -4863,16 +5168,16 @@ function drawMarketScreen() {
         }
 
         // Character preview
-        const previewX = cx2 + cardW/2 - 30;
+        const previewX = cx2 + cardW/2 - 25;
         const previewY = cardY + 30;
         ctx.save();
-        skinDrawFns[i](previewX, previewY, 60, 90, 1, t * 10, false, 0);
+        skinDrawFns[i](previewX, previewY, 50, 80, 1, t * 10, false, 0);
         ctx.restore();
 
         // Name
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 16px Arial';
+        ctx.font = 'bold 13px Arial';
         ctx.fillText(skinNames[i], cx2 + cardW/2, cardY + 145);
 
         // Price or status
@@ -5965,10 +6270,11 @@ canvas.addEventListener('touchstart', (e) => {
             if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
                 if (btn.action === 'back') {
                     fadeOut(() => { gameState = 'title'; fadeIn(); });
-                } else if (btn.action === 'card0') { marketSelection = 0; handleMarketAction(); }
-                else if (btn.action === 'card1') { marketSelection = 1; handleMarketAction(); }
-                else if (btn.action === 'card2') { marketSelection = 2; handleMarketAction(); }
-                else if (btn.action === 'card3') { marketSelection = 3; handleMarketAction(); }
+                } else if (btn.action.startsWith('card')) {
+                    const cardIdx = parseInt(btn.action.replace('card', ''));
+                    marketSelection = cardIdx;
+                    handleMarketAction();
+                }
                 return;
             }
         }
@@ -5987,10 +6293,6 @@ canvas.addEventListener('touchstart', (e) => {
             }
         }
     } else if (gameState === 'paused') {
-        if (pauseInputDelay > 0) return;
-        if (pauseConfirm) {
-            // Check which confirm button was touched (SÍ or NO)
-            for (const btn of pauseConfirmBtns) {
                 if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
                     if (btn.action === 'yes') {
                         executePauseAction(pauseConfirm);
@@ -6053,10 +6355,11 @@ canvas.addEventListener('click', (e) => {
             if (tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h) {
                 if (btn.action === 'back') {
                     fadeOut(() => { gameState = 'title'; fadeIn(); });
-                } else if (btn.action === 'card0') { marketSelection = 0; handleMarketAction(); }
-                else if (btn.action === 'card1') { marketSelection = 1; handleMarketAction(); }
-                else if (btn.action === 'card2') { marketSelection = 2; handleMarketAction(); }
-                else if (btn.action === 'card3') { marketSelection = 3; handleMarketAction(); }
+                } else if (btn.action.startsWith('card')) {
+                    const cardIdx = parseInt(btn.action.replace('card', ''));
+                    marketSelection = cardIdx;
+                    handleMarketAction();
+                }
                 return;
             }
         }
