@@ -6996,14 +6996,19 @@ function drawTitleScreen() {
         keys['Enter'] = false;
         ensureAudio();
         if (titleSelection === 0) {
-            // JUGAR
+            // JUGAR — DEV: skip directo a nivel 9 boss
             storyIndex = 0;
-            currentLevel = 0;
+            currentLevel = 8;
             lives = MAX_LIVES;
             score = 0;
-            savedCheckpoint = { level: 0, score: 0, x: 80 };
+            savedCheckpoint = { level: 8, score: 0, x: 80 };
             fadeOut(() => {
-                gameState = 'story';
+                startLevel(8);
+                const lvl = levels[8];
+                player.x = lvl.bossZone - 200;
+                player.y = 300;
+                player.dead = false;
+                player.hp = player.maxHp;
                 fadeIn();
             });
         } else if (titleSelection === 1) {
