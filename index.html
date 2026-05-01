@@ -4014,7 +4014,7 @@ function findNearestTarget() {
     
     // Check enemies
     for (const e of level.enemies) {
-        if (e.dead) continue;
+        if (!e.alive) continue;
         const ex = e.x + e.w / 2;
         const ey = e.y + e.h / 2;
         const dist = Math.sqrt((ex - px) ** 2 + (ey - py) ** 2);
