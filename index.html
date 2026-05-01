@@ -515,7 +515,7 @@ const STORIES = [
         "¡Larva Rayo fue derrotada!\nPero el peor villano se acerca...",
         "CHICO OPACO, un ser de pura oscuridad,\nquiere controlar el universo entero.",
         "Con su visor púrpura y su capa negra,\nabsorbe la luz de todo lo que toca.",
-        "Es la antítesis del Chico Estrella.\n¡Esta es la batalla final!"
+        "Es la antítesis del Chico Estrella.\n¡Prepárate para enfrentarlo!"
     ]
 ];
 
@@ -3984,10 +3984,11 @@ function drawProjectile(p) {
     } else if (p.type === 'darkpulse') {
         ctx.save();
         ctx.fillStyle = '#4A148C';
-        ctx.shadowColor = '#E040FB';
-        ctx.shadowBlur = 6;
         ctx.beginPath(); ctx.arc(x, p.y, 6, 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#E040FB';
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath(); ctx.arc(x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
         ctx.restore();
     }
 }
@@ -4160,7 +4161,7 @@ function drawBackground(theme, levelNum) {
             ctx.arc(cx2, canvas.height - 108, 12, 0, Math.PI * 2);
             ctx.fill();
         }
-    } else {
+    } else if (levelNum === 5) {
         // School building - desks, bells, windows
         ctx.fillStyle = '#5a3a1a';
         for (let i = 0; i < 10; i++) {
@@ -4194,6 +4195,164 @@ function drawBackground(theme, levelNum) {
             ctx.arc(bx, 50, 12, 0, Math.PI);
             ctx.fill();
             ctx.fillRect(bx - 1, 35, 2, 15);
+        }
+    } else if (levelNum === 6) {
+        // Russia - snowy city with onion domes
+        // Snow on ground
+        ctx.fillStyle = '#e8e8f0';
+        ctx.fillRect(0, canvas.height - 35, canvas.width, 35);
+        // Buildings
+        const colors6 = ['#8B0000', '#1B5E20', '#0D47A1', '#4A148C'];
+        for (let i = 0; i < 10; i++) {
+            const bx = i * 140 - parallax % 140 - 70;
+            const bh = 110 + Math.sin(i * 2.1) * 50;
+            ctx.fillStyle = colors6[i % colors6.length];
+            ctx.fillRect(bx, canvas.height - bh - 35, 100, bh + 35);
+            // Windows
+            ctx.fillStyle = '#FFE082';
+            ctx.globalAlpha = 0.6;
+            for (let wy = 15; wy < bh - 10; wy += 28) {
+                for (let wx = 12; wx < 85; wx += 22) {
+                    ctx.fillRect(bx + wx, canvas.height - bh - 25 + wy, 10, 12);
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+        // Onion domes (St. Basil's style)
+        const domeColors = ['#FFD700', '#E53935', '#1E88E5', '#43A047', '#FF6F00'];
+        for (let i = 0; i < 5; i++) {
+            const dx = i * 220 - (parallax * 0.2) % 220 + 50;
+            const domeH = 60 + (i % 3) * 15;
+            ctx.fillStyle = domeColors[i % domeColors.length];
+            // Dome bulb
+            ctx.beginPath();
+            ctx.moveTo(dx, canvas.height - 160 - domeH);
+            ctx.quadraticCurveTo(dx + 20, canvas.height - 180 - domeH, dx, canvas.height - 200 - domeH);
+            ctx.quadraticCurveTo(dx - 20, canvas.height - 180 - domeH, dx, canvas.height - 160 - domeH);
+            ctx.fill();
+            // Tower base
+            ctx.fillRect(dx - 8, canvas.height - 160 - domeH, 16, domeH);
+            // Gold cross on top
+            ctx.fillStyle = '#FFD700';
+            ctx.fillRect(dx - 1, canvas.height - 207 - domeH, 2, 10);
+            ctx.fillRect(dx - 4, canvas.height - 203 - domeH, 8, 2);
+        }
+        // Snowfall
+        ctx.fillStyle = '#fff';
+        const snowCount = Math.round(40 * BG_DETAIL);
+        for (let i = 0; i < snowCount; i++) {
+            const sx = (i * 131 + parallax * 0.1 + Date.now() * 0.01) % canvas.width;
+            const sy = (i * 67 + Date.now() * 0.03) % canvas.height;
+            const size = 2 + (i % 3);
+            ctx.globalAlpha = 0.6 + Math.sin(i * 0.5) * 0.3;
+            ctx.beginPath(); ctx.arc(sx, sy, size, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    } else if (levelNum === 7) {
+        // Paris - Eiffel tower, cafés, night lights
+        // Parisian buildings (Haussmann style)
+        const parisColors = ['#D7CCC8', '#BCAAA4', '#EFEBE9', '#A1887F'];
+        for (let i = 0; i < 12; i++) {
+            const bx = i * 125 - parallax % 125 - 60;
+            const bh = 100 + Math.sin(i * 1.7) * 40;
+            ctx.fillStyle = parisColors[i % parisColors.length];
+            ctx.fillRect(bx, canvas.height - bh - 40, 90, bh + 40);
+            // Roof (mansard)
+            ctx.fillStyle = '#37474F';
+            ctx.beginPath();
+            ctx.moveTo(bx - 3, canvas.height - bh - 40);
+            ctx.lineTo(bx + 45, canvas.height - bh - 60);
+            ctx.lineTo(bx + 93, canvas.height - bh - 40);
+            ctx.closePath();
+            ctx.fill();
+            // Windows with shutters
+            ctx.fillStyle = '#FFF9C4';
+            ctx.globalAlpha = 0.7;
+            for (let wy = 0; wy < bh - 20; wy += 28) {
+                for (let wx = 12; wx < 78; wx += 22) {
+                    ctx.fillRect(bx + wx, canvas.height - bh - 28 + wy, 8, 14);
+                }
+            }
+            ctx.globalAlpha = 1;
+        }
+        // Eiffel Tower silhouette (background)
+        const ex = canvas.width * 0.3 - (parallax * 0.05) % 60;
+        ctx.fillStyle = '#37474F';
+        ctx.globalAlpha = 0.5;
+        // Tower legs
+        ctx.beginPath();
+        ctx.moveTo(ex - 40, canvas.height - 40);
+        ctx.lineTo(ex - 10, canvas.height - 180);
+        ctx.lineTo(ex + 10, canvas.height - 180);
+        ctx.lineTo(ex + 40, canvas.height - 40);
+        ctx.closePath();
+        ctx.fill();
+        // Tower top
+        ctx.beginPath();
+        ctx.moveTo(ex - 8, canvas.height - 180);
+        ctx.lineTo(ex, canvas.height - 280);
+        ctx.lineTo(ex + 8, canvas.height - 180);
+        ctx.closePath();
+        ctx.fill();
+        // Observation decks
+        ctx.fillRect(ex - 18, canvas.height - 120, 36, 4);
+        ctx.fillRect(ex - 12, canvas.height - 180, 24, 3);
+        ctx.globalAlpha = 1;
+        // Stars
+        ctx.fillStyle = '#fff';
+        const starCount7 = Math.round(35 * BG_DETAIL);
+        for (let i = 0; i < starCount7; i++) {
+            const sx = (i * 127 + parallax * 0.08) % canvas.width;
+            const sy = (i * 59) % (canvas.height * 0.35);
+            const twinkle = Math.sin(Date.now() * 0.003 + i * 1.1) * 0.5 + 0.5;
+            ctx.globalAlpha = twinkle;
+            ctx.fillRect(sx, sy, 2, 2);
+        }
+        ctx.globalAlpha = 1;
+        // Street lamps
+        ctx.fillStyle = '#FFD700';
+        for (let i = 0; i < 5; i++) {
+            const lx = i * 230 - (parallax * 0.4) % 230 + 50;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(lx - 1, canvas.height - 100, 2, 60);
+            ctx.fillStyle = '#FFD700';
+            ctx.globalAlpha = 0.6 + Math.sin(Date.now() * 0.004 + i) * 0.2;
+            ctx.beginPath(); ctx.arc(lx, canvas.height - 105, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    } else {
+        // Dark void / cosmic dimension (Level 9 - Dimensión Opaca)
+        // Dark swirling void
+        ctx.fillStyle = '#0a000a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Purple nebula streaks
+        if (!isMobileEarly) {
+            for (let i = 0; i < 4; i++) {
+                const nx = (i * 300 - parallax * 0.1) % (canvas.width + 200) - 100;
+                const ny = 80 + i * 100;
+                ctx.fillStyle = `rgba(74, 20, 140, 0.15)`;
+                ctx.beginPath();
+                ctx.ellipse(nx, ny, 120, 40, 0.3 * i, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        // Stars (dim, sparse - it's a dark dimension)
+        ctx.fillStyle = '#B388FF';
+        const starCount8 = Math.round(30 * BG_DETAIL);
+        for (let i = 0; i < starCount8; i++) {
+            const sx = (i * 113 + parallax * 0.04) % canvas.width;
+            const sy = (i * 71) % canvas.height;
+            const twinkle = Math.sin(Date.now() * 0.002 + i * 0.9) * 0.4 + 0.4;
+            ctx.globalAlpha = twinkle;
+            ctx.fillRect(sx, sy, 1 + (i % 2), 1 + (i % 2));
+        }
+        ctx.globalAlpha = 1;
+        // Floating dark energy orbs
+        for (let i = 0; i < 6; i++) {
+            const ox = (i * 200 - parallax * 0.2) % (canvas.width + 100) - 50;
+            const oy = 150 + Math.sin(Date.now() * 0.001 + i * 2) * 50;
+            ctx.fillStyle = 'rgba(224, 64, 251, 0.08)';
+            ctx.beginPath(); ctx.arc(ox, oy, 20 + i * 3, 0, Math.PI * 2); ctx.fill();
         }
     }
 }
@@ -5633,50 +5792,45 @@ function updateBoss() {
         // Teleport
         if (!boss.teleportTimer) boss.teleportTimer = 0;
         boss.teleportTimer++;
-        if (boss.teleportTimer > 120 - boss.phase * 25) {
+        if (boss.teleportTimer > 140 - boss.phase * 20) {
             boss.teleportTimer = 0;
             boss.x = player.x + (Math.random() > 0.5 ? 150 : -150);
             if (boss.x < bossArenaLeft) boss.x = bossArenaLeft + 50;
             if (boss.x > bossArenaRight - boss.w) boss.x = bossArenaRight - boss.w - 50;
-            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#E040FB', 10, 3);
+            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#E040FB', 6, 3);
         }
         
         boss.attackTimer++;
-        const cd = boss.attackCooldown - boss.phase * 10;
+        const cd = Math.max(30, boss.attackCooldown - boss.phase * 8);
         if (boss.attackTimer >= cd) {
             boss.attackTimer = 0;
             const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
             // Dark energy blast
             boss.projectiles.push({
                 x: boss.x + boss.w/2, y: boss.y + boss.h/2,
-                vx: Math.cos(angle) * 5.5, vy: Math.sin(angle) * 5.5,
-                type: 'darkenergy', life: 70
+                vx: Math.cos(angle) * 5, vy: Math.sin(angle) * 5,
+                type: 'darkenergy', life: 60
             });
             if (boss.phase >= 1) {
-                // Void zones
+                // Single void zone
                 boss.projectiles.push({
                     x: player.x, y: player.y - 50,
                     vx: 0, vy: 1.5,
-                    type: 'voidzone', life: 120
-                });
-                boss.projectiles.push({
-                    x: player.x + 80, y: player.y - 80,
-                    vx: 0, vy: 1.5,
-                    type: 'voidzone', life: 120
+                    type: 'voidzone', life: 70
                 });
             }
             if (boss.phase >= 2) {
-                // Dark pulse - 8-way burst
-                for (let i = 0; i < 8; i++) {
-                    const a = (Math.PI * 2 / 8) * i;
+                // Dark pulse - 5-way burst (less than before)
+                for (let i = 0; i < 5; i++) {
+                    const a = (Math.PI * 2 / 5) * i;
                     boss.projectiles.push({
                         x: boss.x + boss.w/2, y: boss.y + boss.h/2,
-                        vx: Math.cos(a) * 4.5, vy: Math.sin(a) * 4.5,
-                        type: 'darkpulse', life: 55
+                        vx: Math.cos(a) * 4, vy: Math.sin(a) * 4,
+                        type: 'darkpulse', life: 40
                     });
                 }
-                shakeTimer = 15;
-                shakeIntensity = 8;
+                shakeTimer = 10;
+                shakeIntensity = 5;
             }
         }
         // Body collision
