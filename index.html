@@ -3854,6 +3854,8 @@ function drawEnemy(e) {
         ctx.restore();
     }
 }
+
+function drawCoin(c) {
     if (c.collected) return;
     const x = c.x - camera.x;
     const bob = Math.sin(c.animTimer * 0.08) * 4;
