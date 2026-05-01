@@ -412,6 +412,17 @@ function togglePause() {
 }
 window.addEventListener('keydown', e => {
     if (e.code === 'KeyP') togglePause();
+    // DEV SHORTCUT: Shift+9 → skip to level 9 boss fight instantly
+    if (e.shiftKey && e.code === 'Digit9') {
+        gameState = 'playing';
+        startLevel(8); // level 9 (0-indexed)
+        // Teleport player near boss zone
+        const lvl = levels[8];
+        player.x = lvl.bossZone - 200;
+        player.y = 300;
+        player.dead = false;
+        player.hp = player.maxHp;
+    }
 });
 
 // ---- CAMERA ----
