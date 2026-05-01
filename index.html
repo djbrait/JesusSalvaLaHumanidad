@@ -1924,135 +1924,110 @@ function drawChicoGoloso(x, y, w, h, facing, animFrame, attacking, invincible, i
     if (facing < 0) ctx.scale(-1, 1);
     const cx = -w/2, cy = -h/2;
 
-    // Chico Goloso is slightly bigger
-    ctx.scale(1.12, 1.12);
+    // Chico Goloso is slightly bigger - scale up 15%
+    ctx.scale(1.15, 1.15);
+    const ocx = cx / 1.15, ocy = cy / 1.15;
 
-    const skinColor = '#FFB6C1';
-    const suitColor = '#00CED1';
-    const apronColor = '#8B6914';
-    const shoeColor = '#00CED1';
-    const capColor = '#00CED1';
+    // Legs (pink, thick)
+    const legStep = isRunning ? Math.sin(animFrame * 0.3) * 6 : Math.sin(animFrame * 0.15) * 3;
+    ctx.fillStyle = '#FFB6C1';
+    ctx.fillRect(ocx + w * 0.15, ocy + h * 0.72 + legStep, w * 0.25, h * 0.28);
+    ctx.fillRect(ocx + w * 0.55, ocy + h * 0.72 - legStep, w * 0.25, h * 0.28);
+    // Cyan shoes
+    ctx.fillStyle = '#00CED1';
+    ctx.fillRect(ocx + w * 0.12, ocy + h * 0.92 + legStep, w * 0.3, h * 0.08);
+    ctx.fillRect(ocx + w * 0.52, ocy + h * 0.92 - legStep, w * 0.3, h * 0.08);
 
-    // No cape — he has an apron instead (drawn later on body)
+    // Body (cyan shirt, round/fat)
+    ctx.fillStyle = '#00CED1';
+    ctx.beginPath();
+    ctx.ellipse(ocx + w * 0.5, ocy + h * 0.52, w * 0.42, h * 0.26, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Body (cyan shirt, wider for chubby look)
-    ctx.fillStyle = suitColor;
-    ctx.fillRect(cx + w * 0.12, cy + h * 0.33, w * 0.76, h * 0.35);
-
-    // Legs with walking animation
-    const legSwing = isRunning ? Math.sin(animFrame * 0.35) * 12 : 0;
-    // Left leg
-    ctx.fillStyle = skinColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.33, cy + h * 0.65);
-    ctx.rotate(legSwing * Math.PI / 180 * 2);
-    ctx.fillRect(-w * 0.13, 0, w * 0.26, h * 0.22);
-    ctx.fillStyle = shoeColor;
-    ctx.fillRect(-w * 0.15, h * 0.18, w * 0.30, h * 0.15);
-    ctx.restore();
-    // Right leg
-    ctx.fillStyle = skinColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.67, cy + h * 0.65);
-    ctx.rotate(-legSwing * Math.PI / 180 * 2);
-    ctx.fillRect(-w * 0.13, 0, w * 0.26, h * 0.22);
-    ctx.fillStyle = shoeColor;
-    ctx.fillRect(-w * 0.15, h * 0.18, w * 0.30, h * 0.15);
-    ctx.restore();
-
-    // Belt (apron ties)
-    ctx.fillStyle = apronColor;
-    ctx.fillRect(cx + w * 0.10, cy + h * 0.62, w * 0.80, h * 0.06);
-
-    // Brown apron on chest
-    ctx.fillStyle = apronColor;
-    ctx.fillRect(cx + w * 0.28, cy + h * 0.38, w * 0.44, h * 0.28);
+    // Brown apron
+    ctx.fillStyle = '#8B6914';
+    ctx.fillRect(ocx + w * 0.25, ocy + h * 0.38, w * 0.5, h * 0.34);
     // Apron straps
-    ctx.strokeStyle = apronColor;
+    ctx.strokeStyle = '#8B6914';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(cx + w * 0.32, cy + h * 0.38);
-    ctx.lineTo(cx + w * 0.38, cy + h * 0.30);
-    ctx.moveTo(cx + w * 0.68, cy + h * 0.38);
-    ctx.lineTo(cx + w * 0.62, cy + h * 0.30);
+    ctx.moveTo(ocx + w * 0.3, ocy + h * 0.38);
+    ctx.lineTo(ocx + w * 0.35, ocy + h * 0.18);
+    ctx.moveTo(ocx + w * 0.7, ocy + h * 0.38);
+    ctx.lineTo(ocx + w * 0.65, ocy + h * 0.18);
     ctx.stroke();
     // Cookie on apron
     ctx.fillStyle = '#D2691E';
     ctx.beginPath();
-    ctx.arc(cx + w * 0.5, cy + h * 0.52, 5, 0, Math.PI * 2);
+    ctx.arc(ocx + w * 0.5, ocy + h * 0.52, w * 0.1, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#3E2723';
-    ctx.fillRect(cx + w * 0.47, cy + h * 0.50, 2, 2);
-    ctx.fillRect(cx + w * 0.52, cy + h * 0.53, 2, 2);
+    ctx.fillRect(ocx + w * 0.46, ocy + h * 0.49, 3, 3);
+    ctx.fillRect(ocx + w * 0.52, ocy + h * 0.54, 3, 3);
 
-    // Arms (pink skin, thick)
-    const armAngle = attacking ? -0.8 : Math.sin(animFrame * 0.15) * 0.3;
-    ctx.fillStyle = skinColor;
+    // Arms (pink, thick)
+    const armSwing = attacking ? -20 : Math.sin(animFrame * 0.15) * 5;
+    ctx.fillStyle = '#FFB6C1';
+    // Left arm
     ctx.save();
-    ctx.translate(cx + w * 0.82, cy + h * 0.38);
-    ctx.rotate(armAngle);
-    ctx.fillRect(0, -4, 16, 8);
-    ctx.fillStyle = skinColor;
-    ctx.fillRect(14, -5, 7, 10);
+    ctx.translate(ocx + w * 0.12, ocy + h * 0.35);
+    ctx.rotate((armSwing - 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.1, 0, w * 0.18, h * 0.3);
     ctx.restore();
-    ctx.fillStyle = skinColor;
+    // Right arm
     ctx.save();
-    ctx.translate(cx + w * 0.18, cy + h * 0.38);
-    ctx.rotate(-armAngle * 0.5);
-    ctx.fillRect(-16, -4, 16, 8);
-    ctx.fillRect(-21, -5, 7, 10);
+    ctx.translate(ocx + w * 0.88, ocy + h * 0.35);
+    ctx.rotate((-armSwing + 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.08, 0, w * 0.18, h * 0.3);
     ctx.restore();
 
-    // Head (pink, round)
-    ctx.fillStyle = skinColor;
-    const headW = w * 0.75;
-    const headH = h * 0.30;
+    // Head (pink, round, big)
+    ctx.fillStyle = '#FFB6C1';
     ctx.beginPath();
-    ctx.arc(cx + w * 0.5, cy + h * 0.16, headW * 0.48, 0, Math.PI * 2);
+    ctx.arc(ocx + w * 0.5, ocy + h * 0.15, w * 0.32, 0, Math.PI * 2);
     ctx.fill();
 
     // Cyan cap
-    ctx.fillStyle = capColor;
-    ctx.fillRect(cx + w * 0.15, cy + h * 0.02, w * 0.70, h * 0.07);
+    ctx.fillStyle = '#00CED1';
     ctx.beginPath();
-    ctx.ellipse(cx + w * 0.5, cy + h * 0.04, w * 0.38, h * 0.06, 0, Math.PI, 0);
+    ctx.ellipse(ocx + w * 0.5, ocy + h * 0.04, w * 0.34, h * 0.08, 0, Math.PI, 0);
     ctx.fill();
+    ctx.fillRect(ocx + w * 0.18, ocy + h * 0.02, w * 0.64, h * 0.06);
 
-    // Ears (big)
-    ctx.fillStyle = skinColor;
+    // Ears
+    ctx.fillStyle = '#FFB6C1';
     ctx.beginPath();
-    ctx.arc(cx + w * 0.12, cy + h * 0.14, w * 0.08, 0, Math.PI * 2);
+    ctx.arc(ocx + w * 0.15, ocy + h * 0.14, w * 0.08, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx + w * 0.88, cy + h * 0.14, w * 0.08, 0, Math.PI * 2);
+    ctx.arc(ocx + w * 0.85, ocy + h * 0.14, w * 0.08, 0, Math.PI * 2);
     ctx.fill();
-
-    // Eyebrows
-    ctx.fillStyle = '#333';
-    ctx.fillRect(cx + w * 0.30, cy + h * 0.08, 8, 2);
-    ctx.fillRect(cx + w * 0.58, cy + h * 0.08, 8, 2);
 
     // Eyes
     ctx.fillStyle = '#000';
-    ctx.fillRect(cx + w * 0.33, cy + h * 0.11, 3, 6);
-    ctx.fillRect(cx + w * 0.60, cy + h * 0.11, 3, 6);
+    ctx.fillRect(ocx + w * 0.35, ocy + h * 0.11, 4, 5);
+    ctx.fillRect(ocx + w * 0.58, ocy + h * 0.11, 4, 5);
+
+    // Eyebrows
+    ctx.fillRect(ocx + w * 0.32, ocy + h * 0.08, 8, 2);
+    ctx.fillRect(ocx + w * 0.56, ocy + h * 0.08, 8, 2);
 
     // Open mouth with tongue
     ctx.fillStyle = '#333';
     ctx.beginPath();
-    ctx.arc(cx + w * 0.5, cy + h * 0.24, 6, 0, Math.PI);
+    ctx.arc(ocx + w * 0.5, ocy + h * 0.22, w * 0.1, 0, Math.PI);
     ctx.fill();
     ctx.fillStyle = '#FF6B6B';
     ctx.beginPath();
-    ctx.ellipse(cx + w * 0.5, cy + h * 0.27, 3, 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(ocx + w * 0.5, ocy + h * 0.25, w * 0.05, h * 0.03, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Cookie glow when attacking
+    // Cookie/soda glow when attacking
     if (attacking) {
         ctx.globalAlpha = 0.5;
         ctx.fillStyle = '#D2691E';
         ctx.beginPath();
-        ctx.arc(cx + w * 0.9, cy + h * 0.45, 6, 0, Math.PI * 2);
+        ctx.arc(ocx + w * 0.85, ocy + h * 0.5, 8, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
     }
@@ -2067,159 +2042,128 @@ function drawChicoIman(x, y, w, h, facing, animFrame, attacking, invincible, isE
     if (facing < 0) ctx.scale(-1, 1);
     const cx = -w/2, cy = -h/2;
 
-    const whiteColor = '#f0f0f0';
-    const blackColor = '#111';
-    const beltColor = '#FFD700';
-
-    // Cape (white with black outline, behind body)
-    ctx.fillStyle = whiteColor;
+    // Cape (white, flowing)
+    const capeWave = Math.sin(animFrame * 0.15) * 4;
+    ctx.fillStyle = '#eee';
     ctx.beginPath();
-    const capeWave = Math.sin(animFrame * 0.15) * 3;
-    ctx.moveTo(cx + w * 0.3, cy + h * 0.3);
+    ctx.moveTo(cx + w * 0.2, cy + h * 0.25);
     ctx.quadraticCurveTo(cx - 8 + capeWave, cy + h * 0.6, cx - 5 + capeWave, cy + h * 0.85);
-    ctx.lineTo(cx + w * 0.2, cy + h * 0.8);
+    ctx.lineTo(cx + w * 0.15, cy + h * 0.8);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = blackColor;
+    ctx.strokeStyle = '#000';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Body - split: left white, right black
-    ctx.fillStyle = whiteColor;
-    ctx.fillRect(cx + w * 0.2, cy + h * 0.33, w * 0.3, h * 0.35);
-    ctx.fillStyle = blackColor;
-    ctx.fillRect(cx + w * 0.5, cy + h * 0.33, w * 0.3, h * 0.35);
-
-    // Yin-yang circles on chest
-    ctx.fillStyle = blackColor;
-    ctx.beginPath();
-    ctx.arc(cx + w * 0.35, cy + h * 0.48, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = whiteColor;
-    ctx.beginPath();
-    ctx.arc(cx + w * 0.65, cy + h * 0.48, 5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Legs with walking animation
-    const legSwing = isRunning ? Math.sin(animFrame * 0.35) * 12 : 0;
-    // Left leg (white + black boot)
-    ctx.fillStyle = whiteColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.33, cy + h * 0.65);
-    ctx.rotate(legSwing * Math.PI / 180 * 2);
-    ctx.fillRect(-w * 0.11, 0, w * 0.22, h * 0.22);
-    ctx.fillStyle = blackColor;
-    ctx.fillRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
-    ctx.restore();
-    // Right leg (black + black boot)
-    ctx.fillStyle = blackColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.67, cy + h * 0.65);
-    ctx.rotate(-legSwing * Math.PI / 180 * 2);
-    ctx.fillRect(-w * 0.11, 0, w * 0.22, h * 0.22);
-    ctx.fillStyle = blackColor;
-    ctx.fillRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
-    ctx.restore();
-
-    // Belt (gold)
-    ctx.fillStyle = beltColor;
-    ctx.fillRect(cx + w * 0.18, cy + h * 0.62, w * 0.64, h * 0.06);
-    // M buckles
-    ctx.fillStyle = blackColor;
-    ctx.font = 'bold 7px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('M', cx + w * 0.38, cy + h * 0.67);
-    ctx.fillText('M', cx + w * 0.62, cy + h * 0.67);
-
-    // Arms
-    const armAngle = attacking ? -0.8 : Math.sin(animFrame * 0.15) * 0.3;
-    // Right arm (black)
-    ctx.fillStyle = blackColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.75, cy + h * 0.38);
-    ctx.rotate(armAngle);
-    ctx.fillRect(0, -3, 14, 6);
-    ctx.fillStyle = beltColor;
-    ctx.fillRect(12, -4, 6, 8);
-    ctx.restore();
-    // Left arm (white)
-    ctx.fillStyle = whiteColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.25, cy + h * 0.38);
-    ctx.rotate(-armAngle * 0.5);
-    ctx.fillRect(-14, -3, 14, 6);
-    ctx.fillStyle = blackColor;
-    ctx.fillRect(-18, -4, 6, 8);
-    ctx.restore();
-
-    // Head - split: left white, right black
-    const headW = w * 0.7;
-    const headH = h * 0.28;
-    const headX = cx + w * 0.15;
-    const headY = cy + h * 0.05;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(headX, headY, headW / 2, headH);
-    ctx.clip();
-    ctx.fillStyle = whiteColor;
-    ctx.fillRect(headX, headY, headW, headH);
-    ctx.restore();
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(headX + headW / 2, headY, headW / 2, headH);
-    ctx.clip();
-    ctx.fillStyle = blackColor;
-    ctx.fillRect(headX, headY, headW, headH);
-    ctx.restore();
-
-    // Visor/glasses (dark gray band)
-    ctx.fillStyle = '#333';
-    ctx.fillRect(cx + w * 0.1, cy + h * 0.08, w * 0.80, h * 0.1);
-    // Pointy sides on visor
-    ctx.beginPath();
-    ctx.moveTo(cx + w * 0.1, cy + h * 0.08);
-    ctx.lineTo(cx + w * 0.02, cy + h * 0.13);
-    ctx.lineTo(cx + w * 0.1, cy + h * 0.18);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(cx + w * 0.9, cy + h * 0.08);
-    ctx.lineTo(cx + w * 0.98, cy + h * 0.13);
-    ctx.lineTo(cx + w * 0.9, cy + h * 0.18);
-    ctx.fill();
-    // Eye slots in visor
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(cx + w * 0.25, cy + h * 0.10, w * 0.15, h * 0.05);
-    ctx.fillRect(cx + w * 0.58, cy + h * 0.10, w * 0.15, h * 0.05);
-    // Pupils
+    // Boots (black, pointy)
+    const legStep = isRunning ? Math.sin(animFrame * 0.3) * 6 : Math.sin(animFrame * 0.15) * 3;
     ctx.fillStyle = '#000';
-    ctx.fillRect(cx + w * 0.32, cy + h * 0.11, 2, 4);
-    ctx.fillRect(cx + w * 0.65, cy + h * 0.11, 2, 4);
-
-    // Spiky hair (black)
-    ctx.fillStyle = blackColor;
+    // Left boot
     ctx.beginPath();
-    ctx.moveTo(cx + w * 0.2, cy + h * 0.06);
-    ctx.lineTo(cx + w * 0.15, cy - h * 0.06);
-    ctx.lineTo(cx + w * 0.3, cy + h * 0.04);
-    ctx.lineTo(cx + w * 0.28, cy - h * 0.08);
-    ctx.lineTo(cx + w * 0.4, cy + h * 0.02);
-    ctx.lineTo(cx + w * 0.5, cy - h * 0.06);
-    ctx.lineTo(cx + w * 0.6, cy + h * 0.02);
-    ctx.lineTo(cx + w * 0.7, cy - h * 0.07);
-    ctx.lineTo(cx + w * 0.8, cy + h * 0.06);
+    ctx.moveTo(cx + w * 0.2, cy + h * 0.8 + legStep);
+    ctx.lineTo(cx + w * 0.15, cy + h);
+    ctx.lineTo(cx + w * 0.38, cy + h);
+    ctx.lineTo(cx + w * 0.4, cy + h * 0.8 + legStep);
+    ctx.closePath();
+    ctx.fill();
+    // Right boot
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.6, cy + h * 0.8 - legStep);
+    ctx.lineTo(cx + w * 0.62, cy + h);
+    ctx.lineTo(cx + w * 0.85, cy + h);
+    ctx.lineTo(cx + w * 0.8, cy + h * 0.8 - legStep);
     ctx.closePath();
     ctx.fill();
 
-    // Wide grin
-    ctx.strokeStyle = whiteColor;
-    ctx.lineWidth = 1.5;
+    // Legs - left white, right black
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.22, cy + h * 0.65 + legStep, w * 0.18, h * 0.16);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx + w * 0.6, cy + h * 0.65 - legStep, w * 0.18, h * 0.16);
+
+    // Body - split: left white, right black
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.15, cy + h * 0.3, w * 0.35, h * 0.37);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx + w * 0.5, cy + h * 0.3, w * 0.35, h * 0.37);
+
+    // Black circles on white side
+    ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.moveTo(cx + w * 0.33, cy + h * 0.24);
-    ctx.lineTo(cx + w * 0.67, cy + h * 0.24);
-    ctx.lineTo(cx + w * 0.60, cy + h * 0.28);
-    ctx.lineTo(cx + w * 0.40, cy + h * 0.28);
+    ctx.arc(cx + w * 0.32, cy + h * 0.48, w * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    // White circle on black side
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.68, cy + h * 0.48, w * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Belt (white instead of gold)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(cx + w * 0.15, cy + h * 0.62, w * 0.7, h * 0.04);
+    // M buckles
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('M', cx + w * 0.35, cy + h * 0.66);
+    ctx.fillText('M', cx + w * 0.65, cy + h * 0.66);
+
+    // Arms - left white, right black
+    const armSwing = attacking ? -25 : Math.sin(animFrame * 0.15) * 5;
+    ctx.fillStyle = '#fff';
+    ctx.save();
+    ctx.translate(cx + w * 0.12, cy + h * 0.32);
+    ctx.rotate((armSwing - 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.06, 0, w * 0.14, h * 0.28);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(-w * 0.06, h * 0.2, w * 0.14, h * 0.08);
+    ctx.restore();
+    ctx.fillStyle = '#000';
+    ctx.save();
+    ctx.translate(cx + w * 0.88, cy + h * 0.32);
+    ctx.rotate((-armSwing + 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.08, 0, w * 0.14, h * 0.28);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(-w * 0.08, h * 0.2, w * 0.14, h * 0.08);
+    ctx.restore();
+
+    // Head - split: left white, right black, angular/blocky
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.02, w * 0.3, h * 0.26);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx + w * 0.5, cy + h * 0.02, w * 0.3, h * 0.26);
+
+    // Spiky hair
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.2, cy + h * 0.04);
+    ctx.lineTo(cx + w * 0.15, cy - h * 0.06);
+    ctx.lineTo(cx + w * 0.3, cy + h * 0.02);
+    ctx.lineTo(cx + w * 0.28, cy - h * 0.08);
+    ctx.lineTo(cx + w * 0.4, cy);
+    ctx.lineTo(cx + w * 0.5, cy - h * 0.05);
+    ctx.lineTo(cx + w * 0.6, cy);
+    ctx.lineTo(cx + w * 0.7, cy - h * 0.07);
+    ctx.lineTo(cx + w * 0.8, cy + h * 0.04);
+    ctx.lineTo(cx + w * 0.2, cy + h * 0.04);
+    ctx.fill();
+
+    // Glasses/visor (angular)
+    ctx.fillStyle = '#333';
+    ctx.fillRect(cx + w * 0.22, cy + h * 0.08, w * 0.56, h * 0.1);
+    // Eye slots
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.28, cy + h * 0.1, w * 0.12, h * 0.06);
+    ctx.fillRect(cx + w * 0.58, cy + h * 0.1, w * 0.12, h * 0.06);
+
+    // Grin
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.35, cy + h * 0.22);
+    ctx.lineTo(cx + w * 0.65, cy + h * 0.22);
+    ctx.lineTo(cx + w * 0.55, cy + h * 0.26);
+    ctx.lineTo(cx + w * 0.4, cy + h * 0.26);
     ctx.closePath();
-    ctx.fillStyle = whiteColor;
     ctx.fill();
 
     // Magnet glow when attacking
@@ -2227,11 +2171,11 @@ function drawChicoIman(x, y, w, h, facing, animFrame, attacking, invincible, isE
         ctx.globalAlpha = 0.4;
         ctx.fillStyle = '#FF0000';
         ctx.beginPath();
-        ctx.arc(cx + w * 0.85, cy + h * 0.45, 6, 0, Math.PI * 2);
+        ctx.arc(cx + w * 0.85, cy + h * 0.45, 7, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#0000FF';
         ctx.beginPath();
-        ctx.arc(cx + w * 0.15, cy + h * 0.45, 6, 0, Math.PI * 2);
+        ctx.arc(cx + w * 0.15, cy + h * 0.45, 7, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
     }
@@ -2246,160 +2190,132 @@ function drawChicaMasa(x, y, w, h, facing, animFrame, attacking, invincible, isE
     if (facing < 0) ctx.scale(-1, 1);
     const cx = -w/2, cy = -h/2;
 
-    const skinColor = '#1E90FF';
-    const suitColor = '#FFD700';
-    const capeColor = '#FF0000';
-    const bootColor = '#FF0000';
-    const gloveColor = '#FF0000';
-    const hairColor = '#FF8C00';
-    const visorColor = '#FF0000';
-    const beltColor = '#8B0000';
-
-    // Red cape (behind body)
-    ctx.fillStyle = capeColor;
+    // Red cape
+    const capeWave = Math.sin(animFrame * 0.15) * 4;
+    ctx.fillStyle = '#FF0000';
     ctx.beginPath();
-    const capeWave = Math.sin(animFrame * 0.15) * 3;
-    ctx.moveTo(cx + w * 0.3, cy + h * 0.3);
-    ctx.quadraticCurveTo(cx - 8 + capeWave, cy + h * 0.6, cx - 5 + capeWave, cy + h * 0.85);
-    ctx.lineTo(cx + w * 0.2, cy + h * 0.8);
+    ctx.moveTo(cx + w * 0.25, cy + h * 0.22);
+    ctx.quadraticCurveTo(cx - 10 + capeWave, cy + h * 0.55, cx - 6 + capeWave, cy + h * 0.82);
+    ctx.lineTo(cx + w * 0.2, cy + h * 0.78);
     ctx.closePath();
     ctx.fill();
 
-    // Body (yellow suit)
-    ctx.fillStyle = suitColor;
-    ctx.fillRect(cx + w * 0.2, cy + h * 0.33, w * 0.6, h * 0.35);
+    // Red boots
+    const legStep = isRunning ? Math.sin(animFrame * 0.3) * 6 : Math.sin(animFrame * 0.15) * 3;
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.85 + legStep, w * 0.2, h * 0.15);
+    ctx.fillRect(cx + w * 0.58, cy + h * 0.85 - legStep, w * 0.2, h * 0.15);
 
-    // Red collar/neckpiece
-    ctx.fillStyle = capeColor;
-    ctx.beginPath();
-    ctx.moveTo(cx + w * 0.25, cy + h * 0.33);
-    ctx.lineTo(cx + w * 0.5, cy + h * 0.40);
-    ctx.lineTo(cx + w * 0.75, cy + h * 0.33);
-    ctx.lineTo(cx + w * 0.75, cy + h * 0.36);
-    ctx.lineTo(cx + w * 0.5, cy + h * 0.43);
-    ctx.lineTo(cx + w * 0.25, cy + h * 0.36);
-    ctx.closePath();
-    ctx.fill();
+    // Yellow legs
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(cx + w * 0.22, cy + h * 0.68 + legStep, w * 0.16, h * 0.18);
+    ctx.fillRect(cx + w * 0.6, cy + h * 0.68 - legStep, w * 0.16, h * 0.18);
+
+    // Yellow body
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(cx + w * 0.18, cy + h * 0.3, w * 0.64, h * 0.4);
+
+    // Dark red belt
+    ctx.fillStyle = '#8B0000';
+    ctx.fillRect(cx + w * 0.18, cy + h * 0.63, w * 0.64, h * 0.05);
 
     // Red lightning bolt on chest
-    ctx.fillStyle = capeColor;
+    ctx.fillStyle = '#FF0000';
     ctx.beginPath();
-    ctx.moveTo(cx + w * 0.54, cy + h * 0.40);
-    ctx.lineTo(cx + w * 0.44, cy + h * 0.52);
-    ctx.lineTo(cx + w * 0.52, cy + h * 0.50);
-    ctx.lineTo(cx + w * 0.44, cy + h * 0.62);
-    ctx.lineTo(cx + w * 0.56, cy + h * 0.48);
-    ctx.lineTo(cx + w * 0.48, cy + h * 0.50);
+    ctx.moveTo(cx + w * 0.52, cy + h * 0.32);
+    ctx.lineTo(cx + w * 0.42, cy + h * 0.48);
+    ctx.lineTo(cx + w * 0.52, cy + h * 0.46);
+    ctx.lineTo(cx + w * 0.44, cy + h * 0.6);
+    ctx.lineTo(cx + w * 0.56, cy + h * 0.44);
+    ctx.lineTo(cx + w * 0.48, cy + h * 0.46);
     ctx.closePath();
     ctx.fill();
 
-    // Legs with walking animation
-    const legSwing = isRunning ? Math.sin(animFrame * 0.35) * 12 : 0;
-    // Left leg
-    ctx.fillStyle = suitColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.33, cy + h * 0.65);
-    ctx.rotate(legSwing * Math.PI / 180 * 2);
-    ctx.fillRect(-w * 0.11, 0, w * 0.22, h * 0.22);
-    ctx.fillStyle = bootColor;
-    ctx.fillRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
-    ctx.restore();
-    // Right leg
-    ctx.fillStyle = suitColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.67, cy + h * 0.65);
-    ctx.rotate(-legSwing * Math.PI / 180 * 2);
-    ctx.fillRect(-w * 0.11, 0, w * 0.22, h * 0.22);
-    ctx.fillStyle = bootColor;
-    ctx.fillRect(-w * 0.14, h * 0.18, w * 0.28, h * 0.15);
-    ctx.restore();
-
-    // Belt (dark red)
-    ctx.fillStyle = beltColor;
-    ctx.fillRect(cx + w * 0.18, cy + h * 0.62, w * 0.64, h * 0.06);
-    ctx.fillStyle = suitColor;
+    // Red collar/neckpiece
+    ctx.fillStyle = '#FF0000';
     ctx.beginPath();
-    ctx.arc(cx + w * 0.5, cy + h * 0.65, 4, 0, Math.PI * 2);
+    ctx.moveTo(cx + w * 0.3, cy + h * 0.28);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.34);
+    ctx.lineTo(cx + w * 0.7, cy + h * 0.28);
+    ctx.lineTo(cx + w * 0.7, cy + h * 0.32);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.38);
+    ctx.lineTo(cx + w * 0.3, cy + h * 0.32);
+    ctx.closePath();
     ctx.fill();
 
-    // Arms (yellow + red gloves)
-    const armAngle = attacking ? -0.8 : Math.sin(animFrame * 0.15) * 0.3;
-    // Right arm (stretches when attacking)
-    ctx.fillStyle = suitColor;
-    ctx.save();
-    ctx.translate(cx + w * 0.75, cy + h * 0.38);
-    ctx.rotate(armAngle);
-    const armLen = attacking ? 20 : 14;
-    ctx.fillRect(0, -3, armLen, 6);
-    ctx.fillStyle = gloveColor;
-    ctx.fillRect(armLen - 2, -4, 6, 8);
-    ctx.restore();
+    // Arms (yellow with red gloves)
+    const armSwing = attacking ? -30 : Math.sin(animFrame * 0.15) * 5;
     // Left arm
-    ctx.fillStyle = suitColor;
+    ctx.fillStyle = '#FFD700';
     ctx.save();
-    ctx.translate(cx + w * 0.25, cy + h * 0.38);
-    ctx.rotate(-armAngle * 0.5);
-    ctx.fillRect(-14, -3, 14, 6);
-    ctx.fillStyle = gloveColor;
-    ctx.fillRect(-18, -4, 6, 8);
+    ctx.translate(cx + w * 0.12, cy + h * 0.32);
+    ctx.rotate((armSwing - 10) * Math.PI / 180);
+    ctx.fillRect(-w * 0.05, 0, w * 0.12, h * 0.22);
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(-w * 0.06, h * 0.18, w * 0.14, h * 0.1);
+    ctx.restore();
+    // Right arm (stretches when attacking with Z)
+    ctx.fillStyle = '#FFD700';
+    ctx.save();
+    ctx.translate(cx + w * 0.88, cy + h * 0.32);
+    ctx.rotate((-armSwing + 10) * Math.PI / 180);
+    const armLen = attacking ? h * 0.35 : h * 0.22;
+    ctx.fillRect(-w * 0.07, 0, w * 0.12, armLen);
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(-w * 0.08, armLen - h * 0.06, w * 0.14, h * 0.1);
     ctx.restore();
 
     // Head (blue face)
-    ctx.fillStyle = skinColor;
-    const headW = w * 0.7;
-    const headH = h * 0.28;
-    ctx.fillRect(cx + w * 0.15, cy + h * 0.05, headW, headH);
-
-    // Red visor/mask
-    ctx.fillStyle = visorColor;
-    ctx.fillRect(cx + w * 0.1, cy + h * 0.06, headW + w * 0.1, headH * 0.45);
-    // Pointy ears on visor
+    ctx.fillStyle = '#1E90FF';
     ctx.beginPath();
-    ctx.moveTo(cx + w * 0.1, cy + h * 0.06);
-    ctx.lineTo(cx + w * 0.02, cy + h * 0.12);
-    ctx.lineTo(cx + w * 0.1, cy + h * 0.18);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(cx + w * 0.9, cy + h * 0.06);
-    ctx.lineTo(cx + w * 0.98, cy + h * 0.12);
-    ctx.lineTo(cx + w * 0.9, cy + h * 0.18);
+    ctx.arc(cx + w * 0.5, cy + h * 0.14, w * 0.26, 0, Math.PI * 2);
     ctx.fill();
 
-    // Orange hair (big curly)
-    ctx.fillStyle = hairColor;
+    // Orange hair (curly, big)
+    ctx.fillStyle = '#FF8C00';
     ctx.beginPath();
-    ctx.arc(cx + w * 0.5, cy + h * 0.02, w * 0.32, Math.PI, 0);
+    ctx.arc(cx + w * 0.5, cy + h * 0.06, w * 0.3, Math.PI, 0);
     ctx.fill();
     // Side curls
     ctx.beginPath();
-    ctx.arc(cx + w * 0.1, cy + h * 0.1, w * 0.1, 0, Math.PI * 2);
+    ctx.arc(cx + w * 0.15, cy + h * 0.1, w * 0.12, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx + w * 0.9, cy + h * 0.1, w * 0.1, 0, Math.PI * 2);
+    ctx.arc(cx + w * 0.85, cy + h * 0.1, w * 0.12, 0, Math.PI * 2);
     ctx.fill();
     // Top poof
     ctx.beginPath();
-    ctx.arc(cx + w * 0.5, cy - h * 0.04, w * 0.2, 0, Math.PI * 2);
+    ctx.arc(cx + w * 0.5, cy - h * 0.02, w * 0.22, 0, Math.PI * 2);
     ctx.fill();
 
-    // Eyes in visor (white)
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(cx + w * 0.28, cy + h * 0.09, w * 0.14, h * 0.06);
-    ctx.fillRect(cx + w * 0.58, cy + h * 0.09, w * 0.14, h * 0.06);
-    // Pupils
-    ctx.fillStyle = '#000';
-    ctx.fillRect(cx + w * 0.35, cy + h * 0.10, 2, 5);
-    ctx.fillRect(cx + w * 0.65, cy + h * 0.10, 2, 5);
+    // Red mask/visor
+    ctx.fillStyle = '#FF0000';
+    ctx.fillRect(cx + w * 0.24, cy + h * 0.08, w * 0.52, h * 0.08);
+    // Mask pointy sides
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.24, cy + h * 0.08);
+    ctx.lineTo(cx + w * 0.18, cy + h * 0.12);
+    ctx.lineTo(cx + w * 0.24, cy + h * 0.16);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.76, cy + h * 0.08);
+    ctx.lineTo(cx + w * 0.82, cy + h * 0.12);
+    ctx.lineTo(cx + w * 0.76, cy + h * 0.16);
+    ctx.fill();
 
-    // Big smile
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(cx + w * 0.5, cy + h * 0.24, 7, 0.1, Math.PI - 0.1);
-    ctx.stroke();
+    // Eyes (white in mask)
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.32, cy + h * 0.1, w * 0.12, h * 0.05);
+    ctx.fillRect(cx + w * 0.56, cy + h * 0.1, w * 0.12, h * 0.05);
+
+    // Smile
     ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.arc(cx + w * 0.5, cy + h * 0.24, 5, 0.1, Math.PI - 0.1);
+    ctx.moveTo(cx + w * 0.35, cy + h * 0.2);
+    ctx.quadraticCurveTo(cx + w * 0.5, cy + h * 0.27, cx + w * 0.65, cy + h * 0.2);
+    ctx.lineTo(cx + w * 0.65, cy + h * 0.22);
+    ctx.quadraticCurveTo(cx + w * 0.5, cy + h * 0.28, cx + w * 0.35, cy + h * 0.22);
+    ctx.closePath();
     ctx.fill();
 
     ctx.restore();
