@@ -406,7 +406,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '1.9';
+const GAME_VERSION = '2.0';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -8887,7 +8887,7 @@ function resizeCanvas() {
         }
         setBtnStyle(left, {width:`${btnSize}px`,height:`${btnSize}px`,bottom:`${pad}px`,left:`${pad}px`,right:'',fontSize:`${btnSize*0.4}px`,color:'#fff',marginLeft:''});
         setBtnStyle(right, {width:`${btnSize}px`,height:`${btnSize}px`,bottom:`${pad}px`,left:`${pad + btnSize + 10}px`,right:'',fontSize:`${btnSize*0.4}px`,color:'#fff',marginLeft:''});
-        setBtnStyle(dash, {width:`${smallBtn}px`,height:`${smallBtn}px`,bottom:`${pad + btnSize + 10}px`,left:`${pad}px`,right:'',fontSize:`${smallBtn*0.25}px`,color:'#00d4ff',marginLeft:''});
+        setBtnStyle(dash, {width:`${smallBtn}px`,height:`${smallBtn}px`,bottom:`${pad + smallBtn + 10}px`,right:`${pad + jumpBtn + 14}px`,left:'',fontSize:`${smallBtn*0.25}px`,color:'#00d4ff',marginLeft:''});
         
         // Action buttons right side
         setBtnStyle(jump, {width:`${jumpBtn}px`,height:`${jumpBtn}px`,bottom:`${pad + smallBtn + 10}px`,right:`${pad}px`,left:'',fontSize:`${jumpBtn*0.32}px`,color:'#ff4444',marginLeft:''});
