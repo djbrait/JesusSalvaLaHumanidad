@@ -231,6 +231,10 @@ test('Sistema de hamburguesas del jefe inline en updateBoss()', () => {
     contains(js, 'level.burgers.push(', 'level.burgers.push');
 });
 
+test('updatePlayerProjectiles() declarada como función propia', () => {
+    contains(js, 'function updatePlayerProjectiles(', 'function updatePlayerProjectiles(');
+});
+
 test('bossBurgerTimer y bossBurgerInterval usados en update', () => {
     contains(js, 'bossBurgerTimer', 'bossBurgerTimer');
     contains(js, 'bossBurgerInterval', 'bossBurgerInterval');
