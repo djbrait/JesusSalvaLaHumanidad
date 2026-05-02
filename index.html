@@ -406,7 +406,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '1.4';
+const GAME_VERSION = '1.5';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -510,6 +510,7 @@ function openLevelPicker(levelNum) {
     fadeOut(() => { startLevel(levelNum); fadeIn(); });
 }
 
+let secretDebounce = null;
 window.addEventListener('keydown', e => {
     // Solo capturar teclas de un carácter
     if (e.key.length !== 1) return;
@@ -518,14 +519,20 @@ window.addEventListener('keydown', e => {
     secretBuffer += e.key.toUpperCase();
     if (secretBuffer.length > 3) secretBuffer = secretBuffer.slice(-3);
 
-    const match = secretBuffer.match(/^N(10|[1-9])$/);
-    if (match) {
-        const levelNum = parseInt(match[1]) - 1; // N1 → nivel 0, N9 → nivel 8
-        if (levelNum < LEVEL_THEMES.length) {
-            secretBuffer = '';
-            openLevelPicker(levelNum);
+    // Debounce: esperar 400ms por si el usuario sigue tipeando (ej: N1 → N10)
+    if (secretDebounce) clearTimeout(secretDebounce);
+    secretDebounce = setTimeout(() => {
+        const match = secretBuffer.match(/^N(10|[1-9])$/);
+        if (match) {
+            const levelNum = parseInt(match[1]) - 1; // N1 → nivel 0, N10 → nivel 9
+            if (levelNum < LEVEL_THEMES.length) {
+                secretBuffer = '';
+                openLevelPicker(levelNum);
+            }
         }
-    }
+        secretBuffer = '';
+        secretDebounce = null;
+    }, 400);
 });
 
 // ---- CAMERA ----
@@ -771,9 +778,12 @@ function generateLevel(levelNum) {
         ]
     ];
     
-    for (const p of platConfigs[levelNum]) {
-        for (let i = 0; i < p.w; i++) {
-            platforms.push({ x: p.x + i * TILE, y: p.y, w: TILE, h: TILE, type: 'platform' });
+    // Floating platforms (no platforms in level 9 — El Espacio Final)
+    if (levelNum !== 9) {
+        for (const p of platConfigs[levelNum]) {
+            for (let i = 0; i < p.w; i++) {
+                platforms.push({ x: p.x + i * TILE, y: p.y, w: TILE, h: TILE, type: 'platform' });
+            }
         }
     }
     
@@ -912,16 +922,19 @@ function generateLevel(levelNum) {
             { x: 4200, y: 320, w: 100, endX: 4400, endY: 320, speed: 0.011 },
         ]
     ];
-    for (const mp of movingPlatConfigs[levelNum]) {
-        platforms.push({
-            x: mp.x, y: mp.y, w: mp.w, h: TILE, type: 'moving',
-            move: {
-                startX: mp.x, startY: mp.y,
-                endX: mp.endX, endY: mp.endY,
-                speed: mp.speed, t: 0, dir: 1,
-                dx: 0, dy: 0, prevX: mp.x, prevY: mp.y
-            }
-        });
+    // Moving platforms (no moving platforms in level 9)
+    if (levelNum !== 9) {
+        for (const mp of movingPlatConfigs[levelNum]) {
+            platforms.push({
+                x: mp.x, y: mp.y, w: mp.w, h: TILE, type: 'moving',
+                move: {
+                    startX: mp.x, startY: mp.y,
+                    endX: mp.endX, endY: mp.endY,
+                    speed: mp.speed, t: 0, dir: 1,
+                    dx: 0, dy: 0, prevX: mp.x, prevY: mp.y
+                }
+            });
+        }
     }
     
     // Power-up rings (1 of each per level, hidden on platforms)
@@ -1192,20 +1205,22 @@ function startLevel(num) {
     }
     savedCheckpoint = { level: num, score: score, x: 80 };
     
-    // Add platforms in boss zone for more movement space
-    const bz = level.bossZone;
-    const bossPlatforms = [
-        {x: bz + 100, y: 380, w: 3}, {x: bz + 300, y: 310, w: 3},
-        {x: bz + 500, y: 380, w: 3}
-    ];
-    for (const p of bossPlatforms) {
-        for (let i = 0; i < p.w; i++) {
-            level.platforms.push({ x: p.x + i * TILE, y: p.y, w: TILE, h: TILE, type: 'platform' });
+    // Add platforms in boss zone for more movement space (not for level 9 — El Espacio Final)
+    if (num !== 9) {
+        const bz = level.bossZone;
+        const bossPlatforms = [
+            {x: bz + 100, y: 380, w: 3}, {x: bz + 300, y: 310, w: 3},
+            {x: bz + 500, y: 380, w: 3}
+        ];
+        for (const p of bossPlatforms) {
+            for (let i = 0; i < p.w; i++) {
+                level.platforms.push({ x: p.x + i * TILE, y: p.y, w: TILE, h: TILE, type: 'platform' });
+            }
         }
-    }
-    // Ensure full ground in boss zone
-    for (let x = bz; x < bz + 700; x += TILE) {
-        level.platforms.push({ x, y: 500, w: TILE, h: TILE, type: 'ground' });
+        // Ensure full ground in boss zone
+        for (let x = bz; x < bz + 700; x += TILE) {
+            level.platforms.push({ x, y: 500, w: TILE, h: TILE, type: 'ground' });
+        }
     }
 }
 

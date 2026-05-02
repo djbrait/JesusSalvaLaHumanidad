@@ -244,6 +244,11 @@ test('bossBurgerTimer y bossBurgerInterval usados en update', () => {
 // BLOQUE 6: CÓDIGO SECRETO N10
 // ═══════════════════════════════════════════════════════════════════════════════
 
+test('Código secreto usa debounce para evitar N1 antes de N10', () => {
+    contains(js, 'secretDebounce', 'secretDebounce variable');
+    contains(js, /}, 400\)|400\)/, 'setTimeout 400ms debounce');
+});
+
 test('secretBuffer soporta hasta 3 caracteres', () => {
     contains(js, /secretBuffer\.length > 3|secretBuffer\.slice\(-3\)/,
         'secretBuffer con largo 3');
@@ -324,6 +329,22 @@ criticalFunctions.forEach(fn => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // BLOQUE 10: FONDO ESPACIAL NIVEL 10
 // ═══════════════════════════════════════════════════════════════════════════════
+
+test('Nivel 10 sin plataformas flotantes en generateLevel', () => {
+    contains(js, /levelNum !== 9[\s\S]{0,50}platConfigs|platConfigs[\s\S]{0,200}levelNum !== 9/,
+        'platConfigs salteado para level 9');
+});
+
+test('Nivel 10 sin plataformas móviles en generateLevel', () => {
+    contains(js, /levelNum !== 9[\s\S]{0,200}movingPlatConfigs|movingPlatConfigs[\s\S]{0,200}levelNum !== 9/,
+        'movingPlatConfigs salteado para level 9');
+});
+
+test('startLevel no agrega boss platforms en nivel 9', () => {
+    const startBlock = js.match(/function startLevel[\s\S]*?^}/m);
+    assert(startBlock, 'startLevel no encontrado');
+    contains(startBlock[0], /num !== 9|currentLevel !== 9/, 'skip boss platforms para nivel 9 en startLevel');
+});
 
 test('Fondo espacial para nivel 10 en drawBackground()', () => {
     const bgBlock = js.match(/function drawBackground[\s\S]*?^}/m);
