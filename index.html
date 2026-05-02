@@ -406,7 +406,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '1.5';
+const GAME_VERSION = '1.6';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -826,7 +826,16 @@ function generateLevel(levelNum) {
     }
     
     // Coins
+    const level9GapZones = [[350,500],[900,1100],[1500,1700],[2200,2500],[3000,3300],[3800,4100],[4500,4800]];
     for (let x = 150; x < width - 200; x += 120 + Math.random() * 80) {
+        if (levelNum === 9) {
+            let inGap = false;
+            for (const [gs, ge] of level9GapZones) {
+                if (x >= gs && x < ge) { inGap = true; break; }
+            }
+            if (!inGap) coins.push({ x, y: 468, collected: false, animTimer: Math.random() * 100 });
+            continue;
+        }
         const platAbove = platConfigs[levelNum].find(p => Math.abs(p.x + p.w * TILE / 2 - x) < 60);
         const cy = platAbove ? platAbove.y - 40 : 460 - Math.random() * 100;
         coins.push({ x, y: cy, collected: false, animTimer: Math.random() * 100 });
@@ -937,8 +946,13 @@ function generateLevel(levelNum) {
         }
     }
     
-    // Power-up rings (1 of each per level, hidden on platforms)
+    // Power-up rings (1 of each per level, hidden on platforms or ground for level 9)
     const powerUps = [];
+    if (levelNum === 9) {
+        // Level 9 has no platforms — place rings on the ground in safe zones
+        powerUps.push({ x: 700,  y: 468, type: 'giant', collected: false, animTimer: Math.random() * 100 });
+        powerUps.push({ x: 2800, y: 468, type: 'fly',   collected: false, animTimer: Math.random() * 100 });
+    } else {
     const ringPlats = platConfigs[levelNum];
     // Giant ring (lapis lazuli) - on a mid-level platform
     const giantPlat = ringPlats[Math.floor(ringPlats.length * 0.4)];
@@ -958,6 +972,7 @@ function generateLevel(levelNum) {
         collected: false,
         animTimer: Math.random() * 100
     });
+    }
     
     // Hamburger (1 per level, random position on ground)
     const burgers = [];
@@ -1163,13 +1178,13 @@ function createBoss(levelNum) {
         { // Rey de los Anillos (level 10, index 9)
             name: 'Rey de los Anillos',
             type: 'reydelosanillos',
-            hp: 30,
-            maxHp: 30,
+            hp: 80,
+            maxHp: 80,
             w: 200,
             h: 280,
             vx: 0,
             vy: 0,
-            armSide: 'right',
+            armSide: 'left',
             armY: 0,
             armSlamSpeed: 4,
             armState: 'idle',
@@ -3656,110 +3671,188 @@ function drawReyDelosAnillos(b) {
   if (!b || b.dead) return;
   const bx = Math.round(b.x - camera.x);
   const by = b.y;
+  const cx = bx + b.w / 2;
+  const bh = b.h;
 
   ctx.save();
 
-  // Crown/helmet
-  ctx.fillStyle = '#FFD700';
+  const armSide = b.armSide || 'left';
+  const armFlip = (armSide === 'right');
+
+  // Shoulder origin
+  const shoulderX = armFlip ? (cx + 60) : (cx - 60);
+  const shoulderY = by + 82;
+  // Fist center (drops with armY)
+  const fistCX = armFlip ? (bx + b.w + 128) : (bx - 128);
+  const fistCY = by + 80 + b.armY;
+
+  // === ARM: orange thick line + big brown fist ===
+  ctx.strokeStyle = '#CC5200';
+  ctx.lineWidth = 32;
+  ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(bx + b.w/2 - 50, by + 10);
-  ctx.lineTo(bx + b.w/2 - 30, by - 40);
-  ctx.lineTo(bx + b.w/2,      by - 60);
-  ctx.lineTo(bx + b.w/2 + 30, by - 40);
-  ctx.lineTo(bx + b.w/2 + 50, by + 10);
+  ctx.moveTo(shoulderX, shoulderY);
+  ctx.lineTo(fistCX, fistCY);
+  ctx.stroke();
+
+  // Brown fist circle
+  ctx.fillStyle = '#8B4513';
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(fistCX, fistCY, 54, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Knuckle detail (rounded rect inside fist)
+  ctx.strokeStyle = '#5C2800';
+  ctx.lineWidth = 3;
+  const kx = fistCX - 30, ky = fistCY - 22, kw = 48, kh = 30, kr = 7;
+  ctx.beginPath();
+  ctx.moveTo(kx + kr, ky);
+  ctx.lineTo(kx + kw - kr, ky);
+  ctx.arcTo(kx + kw, ky, kx + kw, ky + kr, kr);
+  ctx.lineTo(kx + kw, ky + kh - kr);
+  ctx.arcTo(kx + kw, ky + kh, kx + kw - kr, ky + kh, kr);
+  ctx.lineTo(kx + kr, ky + kh);
+  ctx.arcTo(kx, ky + kh, kx, ky + kh - kr, kr);
+  ctx.lineTo(kx, ky + kr);
+  ctx.arcTo(kx, ky, kx + kr, ky, kr);
+  ctx.closePath();
+  ctx.stroke();
+
+  // === BODY (triangular fan shape) ===
+  const bodyTopY = by + 64;
+  const bodyBotY = by + bh;
+
+  // Green bottom strip
+  ctx.fillStyle = '#2E8B2E';
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 2;
+  ctx.fillRect(cx - 150, bodyBotY - 24, 300, 24);
+  ctx.strokeRect(cx - 150, bodyBotY - 24, 300, 24);
+
+  // Left orange triangle
+  ctx.fillStyle = '#FF6400';
+  ctx.beginPath();
+  ctx.moveTo(cx - 18, bodyTopY);
+  ctx.lineTo(cx - 150, bodyBotY - 24);
+  ctx.lineTo(cx - 18, bodyBotY - 24);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  ctx.stroke();
 
-  // Head
-  ctx.fillStyle = '#4A0080';
-  ctx.fillRect(bx + b.w/2 - 45, by + 10, 90, 70);
-
-  // Eyes (glowing)
-  ctx.fillStyle = '#FF0000';
-  ctx.shadowColor = '#FF0000';
-  ctx.shadowBlur = 15;
+  // Right yellow triangle
+  ctx.fillStyle = '#FFD700';
   ctx.beginPath();
-  ctx.ellipse(bx + b.w/2 - 18, by + 38, 12, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(cx + 18, bodyTopY);
+  ctx.lineTo(cx + 150, bodyBotY - 24);
+  ctx.lineTo(cx + 18, bodyBotY - 24);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Red center strip
+  ctx.fillStyle = '#CC1100';
   ctx.beginPath();
-  ctx.ellipse(bx + b.w/2 + 18, by + 38, 12, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.shadowBlur = 0;
+  ctx.moveTo(cx - 18, bodyTopY);
+  ctx.lineTo(cx + 18, bodyTopY);
+  ctx.lineTo(cx + 18, bodyBotY - 24);
+  ctx.lineTo(cx - 18, bodyBotY - 24);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
 
-  // Torso
-  ctx.fillStyle = '#2E0050';
-  ctx.fillRect(bx + b.w/2 - 55, by + 80, 110, 120);
+  // Overall body triangle outline
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, bodyTopY - 6);
+  ctx.lineTo(cx - 150, bodyBotY - 24);
+  ctx.lineTo(cx + 150, bodyBotY - 24);
+  ctx.closePath();
+  ctx.stroke();
 
-  // Chest armor plates
-  ctx.fillStyle = '#8B0000';
-  ctx.fillRect(bx + b.w/2 - 40, by + 90, 35, 50);
-  ctx.fillRect(bx + b.w/2 + 5,  by + 90, 35, 50);
+  // Belt buckle
+  const buckY = bodyTopY + (bodyBotY - bodyTopY) * 0.44;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  ctx.fillRect(cx - 19, buckY, 38, 22);
+  ctx.strokeRect(cx - 19, buckY, 38, 22);
+  ctx.fillStyle = '#CC1100';
+  ctx.fillRect(cx - 9, buckY + 6, 18, 10);
+  ctx.strokeRect(cx - 9, buckY + 6, 18, 10);
 
-  // Rings orbiting
-  b.ringAngle = (b.ringAngle || 0) + 0.04;
-  for (let r = 0; r < 3; r++) {
-    const ang = b.ringAngle + r * (Math.PI * 2 / 3);
-    const rx = bx + b.w/2 + Math.cos(ang) * 70;
-    const ry = by + 140 + Math.sin(ang) * 20;
-    ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 4;
-    ctx.shadowColor = '#FFD700';
-    ctx.shadowBlur = 8;
+  // === HEAD (round red ball) ===
+  const headCX = cx;
+  const headCY = by + 26;
+  const headR = 42;
+
+  ctx.fillStyle = '#CC1100';
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(headCX, headCY, headR, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+
+  // === CROWN (yellow, 3 spikes) ===
+  ctx.fillStyle = '#FFD700';
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(headCX - 40, headCY - headR + 8);
+  ctx.lineTo(headCX - 27, headCY - headR - 12);
+  ctx.lineTo(headCX - 12, headCY - headR + 1);
+  ctx.lineTo(headCX,      headCY - headR - 28);
+  ctx.lineTo(headCX + 12, headCY - headR + 1);
+  ctx.lineTo(headCX + 27, headCY - headR - 12);
+  ctx.lineTo(headCX + 40, headCY - headR + 8);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // === EYES ===
+  const px2 = player ? (player.x + player.w / 2 - camera.x) : headCX;
+  const py2 = player ? (player.y + player.h / 2) : headCY;
+
+  // Two white circular eyes
+  const eyeSpots = [{ x: headCX - 15, y: headCY + 7 }, { x: headCX + 15, y: headCY + 7 }];
+  for (const ep of eyeSpots) {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(ep.x, ep.y, 11, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    const ang = Math.atan2(py2 - ep.y, px2 - ep.x);
+    ctx.fillStyle = '#111';
     ctx.beginPath();
-    ctx.ellipse(rx, ry, 18, 8, ang, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+    ctx.arc(ep.x + Math.cos(ang) * 4.5, ep.y + Math.sin(ang) * 4.5, 5, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  // Lower body / legs
-  ctx.fillStyle = '#3B0070';
-  ctx.fillRect(bx + b.w/2 - 40, by + 200, 35, 80);
-  ctx.fillRect(bx + b.w/2 + 5,  by + 200, 35, 80);
+  // Third eye (purple oval on forehead)
+  const eye3X = headCX, eye3Y = headCY - 19;
+  ctx.fillStyle = '#C8A0E0';
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(eye3X, eye3Y, 13, 9, 0, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  const ang3 = Math.atan2(py2 - eye3Y, px2 - eye3X);
+  ctx.fillStyle = '#5500AA';
+  ctx.beginPath();
+  ctx.arc(eye3X + Math.cos(ang3) * 4, eye3Y + Math.sin(ang3) * 4, 5, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Arm — the slamming arm
-  const sides = b.phase2Active ? ['left', 'right'] : [b.armSide];
-  sides.forEach(side => {
-    const armBaseY = by + b.h * 0.35;
-    const armDrawX = bx + (side === 'left' ? -160 : b.w + 60);
-    const armDrawY = armBaseY + (side === b.armSide ? b.armY : b.armY * 0.7);
-
-    // Upper arm
-    ctx.strokeStyle = '#4A0080';
-    ctx.lineWidth = 18;
-    ctx.lineCap = 'round';
+  // === MOUTH (big grin with triangular teeth) ===
+  const mouthY = headCY + 23;
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.arc(headCX, mouthY, 22, 0, Math.PI);
+  ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  for (let t = 0; t < 6; t++) {
+    const tx = headCX - 21 + t * 8.5;
     ctx.beginPath();
-    ctx.moveTo(side === 'left' ? bx + 10 : bx + b.w - 10, armBaseY);
-    ctx.lineTo(armDrawX + 90, armDrawY + 30);
-    ctx.stroke();
-
-    // Forearm
-    ctx.strokeStyle = '#2E0050';
-    ctx.lineWidth = 14;
-    ctx.beginPath();
-    ctx.moveTo(armDrawX + 90, armDrawY + 30);
-    ctx.lineTo(armDrawX + 90, armDrawY + 60);
-    ctx.stroke();
-
-    // Fist / claw
-    ctx.fillStyle = '#8B0000';
-    ctx.shadowColor = '#FF0000';
-    ctx.shadowBlur = b.armState === 'slamming' ? 20 : 0;
-    ctx.beginPath();
-    ctx.arc(armDrawX + 90, armDrawY + 75, 22, 0, Math.PI * 2);
+    ctx.moveTo(tx, mouthY);
+    ctx.lineTo(tx + 4, mouthY + 13);
+    ctx.lineTo(tx + 8.5, mouthY);
+    ctx.closePath();
     ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Claws
-    ctx.fillStyle = '#FF6666';
-    for (let c = -1; c <= 1; c++) {
-      ctx.beginPath();
-      ctx.moveTo(armDrawX + 90 + c * 12, armDrawY + 75);
-      ctx.lineTo(armDrawX + 90 + c * 14, armDrawY + 100);
-      ctx.lineTo(armDrawX + 90 + c * 8, armDrawY + 98);
-      ctx.closePath();
-      ctx.fill();
-    }
-  });
+  }
 
   ctx.restore();
 }
@@ -6192,8 +6285,14 @@ function updateBoss() {
         }
     } else if (boss.type === 'reydelosanillos') {
         // Phase 2 at half HP
-        if (boss.hp <= 15 && !boss.phase2Active) {
+        if (boss.hp <= 40 && !boss.phase2Active) {
             boss.phase2Active = true;
+        }
+
+        // Arm side tracks player position (while idle or retracted)
+        if (boss.armState === 'idle') {
+            const bossCenter = boss.x + boss.w / 2;
+            boss.armSide = (player.x + player.w / 2 > bossCenter) ? 'right' : 'left';
         }
 
         // Arm slam AI
@@ -6204,7 +6303,6 @@ function updateBoss() {
             if (boss.slamTimer >= reyInterval) {
                 boss.slamTimer = 0;
                 boss.armState = 'slamming';
-                boss.armSide = boss.armSide === 'right' ? 'left' : 'right';
             }
         } else if (boss.armState === 'slamming') {
             boss.armY += boss.armSlamSpeed;
@@ -7737,7 +7835,35 @@ function drawGameplay() {
         ctx.fillStyle = 'rgba(255, 0, 0, 0.05)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    
+
+    // Space holes — draw glowing void for level 9 gaps so they're clearly visible
+    if (currentLevel === 9) {
+        const spaceGaps = [[350,500],[900,1100],[1500,1700],[2200,2500],[3000,3300],[3800,4100],[4500,4800]];
+        for (const [gs, ge] of spaceGaps) {
+            const sx = gs - camera.x, ex = ge - camera.x;
+            if (ex < -10 || sx > canvas.width + 10) continue;
+            // Deep abyss gradient
+            const abyss = ctx.createLinearGradient(sx, 488, sx, canvas.height + 10);
+            abyss.addColorStop(0,   'rgba(100, 0, 0, 0.85)');
+            abyss.addColorStop(0.3, 'rgba(20, 0, 40, 1)');
+            abyss.addColorStop(1,   'rgba(0, 0, 0, 1)');
+            ctx.fillStyle = abyss;
+            ctx.fillRect(sx, 488, ex - sx, canvas.height - 488 + 10);
+            // Left-edge warning glow
+            const lgrd = ctx.createLinearGradient(sx, 0, sx + 22, 0);
+            lgrd.addColorStop(0, 'rgba(255, 60, 0, 0.8)');
+            lgrd.addColorStop(1, 'rgba(255, 60, 0, 0)');
+            ctx.fillStyle = lgrd;
+            ctx.fillRect(sx, 475, 22, 55);
+            // Right-edge warning glow
+            const rgrd = ctx.createLinearGradient(ex, 0, ex - 22, 0);
+            rgrd.addColorStop(0, 'rgba(255, 60, 0, 0.8)');
+            rgrd.addColorStop(1, 'rgba(255, 60, 0, 0)');
+            ctx.fillStyle = rgrd;
+            ctx.fillRect(ex - 22, 475, 22, 55);
+        }
+    }
+
     // Platforms
     for (const p of level.platforms) {
         drawPlatform(p, theme);
