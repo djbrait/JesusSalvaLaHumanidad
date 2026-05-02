@@ -410,7 +410,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '2.2';
+const GAME_VERSION = '2.3';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -438,6 +438,8 @@ let unlockedSkins = JSON.parse(localStorage.getItem('chicoEstrella_unlockedSkins
 while (unlockedSkins.length < 10) unlockedSkins.push(false);
 let marketSelection = 0;
 let marketButtons = [];
+let marketScrollY = 0;
+let marketScrollMax = 0;
 
 function saveMarketData() {
     localStorage.setItem('chicoEstrella_totalCoins', totalCoins);
@@ -7847,7 +7849,7 @@ function drawMarketScreen() {
     const skinPrices = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000, 5000, 5000];
     const skinDrawFns = [drawChicoEstrella, drawChicaFugaz, drawChicoLuminoso, drawChicoInvisible, drawMagnate, drawChicoGoloso, drawChicoIman, drawChicaMasa, drawChicoAgilista, drawFantascool];
 
-    // Background - supermarket theme
+    // Background - supermarket theme (fills full canvas ignoring scroll)
     const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
     grad.addColorStop(0, '#1a0a2e');
     grad.addColorStop(0.5, '#16213e');
@@ -7855,7 +7857,7 @@ function drawMarketScreen() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Shelf lines
+    // Shelf lines (static background decoration)
     ctx.strokeStyle = 'rgba(139,90,43,0.4)';
     ctx.lineWidth = 3;
     for (let sy = 120; sy < canvas.height; sy += 200) {
@@ -7873,6 +7875,7 @@ function drawMarketScreen() {
         }
     }
 
+    // ── FIXED HEADER (no scroll) ──
     // Title sign
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     roundRect(ctx, canvas.width/2 - 140, 10, 280, 50, 10, true, false);
@@ -7893,6 +7896,7 @@ function drawMarketScreen() {
     ctx.textAlign = 'right';
     ctx.fillText('⭐ ' + totalCoins, canvas.width - 25, 40);
 
+    // ── SCROLLABLE CONTENT ──
     // Character cards — grid of 4 per row
     const numSkins = 10;
     const perRow = 4;
@@ -7902,8 +7906,18 @@ function drawMarketScreen() {
     const startX = (canvas.width - totalRowW) / 2;
     const row0Y = 72;
     const rowGap = cardH + 18;
+    const totalRows = Math.ceil(numSkins / perRow);
+    const contentBottom = row0Y + totalRows * rowGap + 60 + 14 + 42 + 16;
+    marketScrollMax = Math.max(0, contentBottom - canvas.height);
 
     marketButtons = [];
+
+    // Clip to below fixed header
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 65, canvas.width, canvas.height - 65);
+    ctx.clip();
+    ctx.translate(0, -marketScrollY);
 
     for (let i = 0; i < numSkins; i++) {
         const col = i % perRow;
@@ -7988,11 +8002,11 @@ function drawMarketScreen() {
         ctx.textAlign = 'center';
         ctx.fillText(btnLabel, cx2 + cardW/2, btnY + 20);
 
-        marketButtons.push({ x: cx2, y: cardY, w: cardW, h: cardH, action: 'card' + i });
+        // Store button with scroll-adjusted y for hit testing
+        marketButtons.push({ x: cx2, y: cardY - marketScrollY, w: cardW, h: cardH, action: 'card' + i });
     }
 
     // Compute total rows for VOLVER placement
-    const totalRows = Math.ceil(numSkins / perRow);
     const lastRowBottom = row0Y + totalRows * rowGap - 18 + 18;
 
     // VOLVER button
@@ -8007,13 +8021,30 @@ function drawMarketScreen() {
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('← VOLVER', canvas.width/2, volverY + 28);
-    marketButtons.push({ x: volverX, y: volverY, w: volverW, h: volverH, action: 'back' });
+    marketButtons.push({ x: volverX, y: volverY - marketScrollY, w: volverW, h: volverH, action: 'back' });
+
+    ctx.restore(); // end scroll clip
+
+    // Scroll indicator bar (right side)
+    if (marketScrollMax > 0) {
+        const barH = canvas.height - 80;
+        const barX = canvas.width - 10;
+        const barY = 70;
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(barX, barY, 6, barH);
+        const thumbH = Math.max(30, barH * (canvas.height / contentBottom));
+        const thumbY = barY + (marketScrollY / marketScrollMax) * (barH - thumbH);
+        ctx.fillStyle = 'rgba(255,215,0,0.6)';
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(barX, thumbY, 6, thumbH, 3) : ctx.fillRect(barX, thumbY, 6, thumbH);
+        ctx.fill();
+    }
 
     // Controls hint
     ctx.fillStyle = '#666';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('←→ Elegir | ENTER Comprar/Seleccionar | ESC Volver', canvas.width/2, canvas.height - 15);
+    ctx.fillText('←→ Elegir | ENTER Comprar/Seleccionar | Rueda del ratón para desplazar', canvas.width/2, canvas.height - 6);
 
     ctx.textAlign = 'left';
 }
@@ -8234,6 +8265,7 @@ function drawTitleScreen() {
                 sessionCoins = 0;
                 saveMarketData();
                 marketSelection = 0;
+                marketScrollY = 0;
                 gameState = 'market';
                 fadeIn();
             });
@@ -9243,6 +9275,30 @@ canvas.addEventListener('touchstart', (e) => {
         setTimeout(() => keys['Enter'] = false, 100);
     }
 }, {passive: false});
+
+// Mouse wheel scroll in market
+canvas.addEventListener('wheel', (e) => {
+    if (gameState !== 'market') return;
+    e.preventDefault();
+    marketScrollY = Math.max(0, Math.min(marketScrollMax, marketScrollY + e.deltaY * 0.6));
+}, { passive: false });
+
+// Touch drag scroll in market
+let _mktTouchStartY = 0;
+let _mktTouchLastY = 0;
+canvas.addEventListener('touchstart', (e2) => {
+    if (gameState !== 'market') return;
+    _mktTouchStartY = e2.touches[0].clientY;
+    _mktTouchLastY = _mktTouchStartY;
+}, { passive: true });
+canvas.addEventListener('touchmove', (e2) => {
+    if (gameState !== 'market') return;
+    const dy = _mktTouchLastY - e2.touches[0].clientY;
+    _mktTouchLastY = e2.touches[0].clientY;
+    const rect = canvas.getBoundingClientRect();
+    const scaleY = canvas.height / rect.height;
+    marketScrollY = Math.max(0, Math.min(marketScrollMax, marketScrollY + dy * scaleY));
+}, { passive: true });
 
 canvas.addEventListener('click', (e) => {
     ensureAudio();
