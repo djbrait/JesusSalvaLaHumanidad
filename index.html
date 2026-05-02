@@ -263,9 +263,70 @@ function startMusic() {
     scheduleBass();
 }
 
+let finalMusicPlaying = false;
+let finalMusicInterval = null;
+
 function stopMusic() {
+    finalMusicPlaying = false;
+    if (finalMusicInterval) { clearInterval(finalMusicInterval); finalMusicInterval = null; }
     musicPlaying = false;
     if (musicInterval) { clearInterval(musicInterval); musicInterval = null; }
+}
+
+function startFinalMusic() {
+  if (finalMusicPlaying) return;
+  stopMusic();
+  finalMusicPlaying = true;
+
+  function playRockBit() {
+    if (!finalMusicPlaying) return;
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [220, 277.18, 329.63, 220, 246.94, 220, 196, 220];
+    let t = ac.currentTime;
+    notes.forEach((freq, i) => {
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      const dist = ac.createWaveShaper();
+      const curve = new Float32Array(256);
+      for (let j = 0; j < 256; j++) {
+        const x = (j * 2) / 256 - 1;
+        curve[j] = (Math.PI + 300) * x / (Math.PI + 300 * Math.abs(x));
+      }
+      dist.curve = curve;
+      osc.type = 'sawtooth';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.18, t + i * 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.22 + 0.20);
+      osc.connect(dist);
+      dist.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(t + i * 0.22);
+      osc.stop(t + i * 0.22 + 0.22);
+    });
+    [0, 0.44, 0.88, 1.10, 1.54].forEach(bt => {
+      const kick = ac.createOscillator();
+      const kGain = ac.createGain();
+      kick.frequency.setValueAtTime(180, t + bt);
+      kick.frequency.exponentialRampToValueAtTime(40, t + bt + 0.08);
+      kGain.gain.setValueAtTime(0.5, t + bt);
+      kGain.gain.exponentialRampToValueAtTime(0.001, t + bt + 0.12);
+      kick.connect(kGain);
+      kGain.connect(ac.destination);
+      kick.start(t + bt);
+      kick.stop(t + bt + 0.14);
+    });
+  }
+
+  playRockBit();
+  finalMusicInterval = setInterval(playRockBit, 1760);
+}
+
+function stopFinalMusic() {
+  finalMusicPlaying = false;
+  if (finalMusicInterval) {
+    clearInterval(finalMusicInterval);
+    finalMusicInterval = null;
+  }
 }
 
 // Pausar TODO el audio cuando el dispositivo se bloquea o la app pasa a segundo plano
@@ -275,8 +336,8 @@ let _appHidden = false;
 function handleAppHidden() {
     if (_appHidden) return;
     _appHidden = true;
-    _musicWasPlaying = musicPlaying;
-    if (musicPlaying) stopMusic();
+    _musicWasPlaying = musicPlaying || finalMusicPlaying;
+    if (musicPlaying || finalMusicPlaying) stopMusic();
     // Cerrar AudioContext completamente para cortar osciladores ya programados
     if (audioCtx) {
         try { audioCtx.close(); } catch(e) {}
@@ -288,7 +349,10 @@ function handleAppVisible() {
     if (!_appHidden) return;
     _appHidden = false;
     // AudioContext se re-crea automáticamente en ensureAudio() al necesitarse
-    if (_musicWasPlaying && musicEnabled) startMusic();
+    if (_musicWasPlaying && musicEnabled) {
+        if (currentLevel === 9) startFinalMusic();
+        else startMusic();
+    }
 }
 
 document.addEventListener('visibilitychange', () => {
@@ -342,7 +406,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '1.1';
+const GAME_VERSION = '1.2';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -413,7 +477,11 @@ function togglePause() {
     } else if (gameState === 'paused') {
         pauseConfirm = null;
         gameState = previousState;
-        startMusic();
+        if (currentLevel === 9) {
+            startFinalMusic();
+        } else {
+            startMusic();
+        }
     }
 }
 window.addEventListener('keydown', e => {
@@ -448,9 +516,9 @@ window.addEventListener('keydown', e => {
     // Solo permitir códigos secretos en pantalla de título o durante el juego normal (no en bossFight ni gameOver)
     if (!['title', 'playing', 'paused', 'story', 'tutorial', 'levelComplete'].includes(gameState)) return;
     secretBuffer += e.key.toUpperCase();
-    if (secretBuffer.length > 2) secretBuffer = secretBuffer.slice(-2);
+    if (secretBuffer.length > 3) secretBuffer = secretBuffer.slice(-3);
 
-    const match = secretBuffer.match(/^N([1-9])$/);
+    const match = secretBuffer.match(/^N(10|[1-9])$/);
     if (match) {
         const levelNum = parseInt(match[1]) - 1; // N1 → nivel 0, N9 → nivel 8
         if (levelNum < LEVEL_THEMES.length) {
@@ -500,7 +568,8 @@ const LEVEL_THEMES = [
     { name: 'El Colegio del Ruido', sky1: '#8B4513', sky2: '#D2691E', ground: '#654321', platform: '#8B6914', accent: '#FFD700' },
     { name: 'La Escuela Poseída', sky1: '#1a0020', sky2: '#2a0040', ground: '#333', platform: '#555', accent: '#9C27B0' },
     { name: 'El Consultorio Siniestro', sky1: '#0a0a20', sky2: '#1a1a3a', ground: '#2a2a40', platform: '#3a3a5a', accent: '#7B1FA2' },
-    { name: 'La Dimensión Opaca', sky1: '#0a000a', sky2: '#1a001a', ground: '#1a0a1a', platform: '#2a1a2a', accent: '#E040FB' }
+    { name: 'La Dimensión Opaca', sky1: '#0a000a', sky2: '#1a001a', ground: '#1a0a1a', platform: '#2a1a2a', accent: '#E040FB' },
+    { name: 'El Espacio Final', color: '#0D0D2B', skyColor: '#0D0D2B', groundColor: '#8B0000', accentColor: '#FFD700', sky1: '#000010', sky2: '#0D0D2B', ground: '#8B0000', platform: '#4A0080', accent: '#FFD700' }
 ];
 
 const SKIN_NAMES = ['Chico Estrella', 'Chica Fugaz', 'Chico Luminoso', 'Chico Invisible', 'Magnate', 'Chico Goloso', 'Chico Imán', 'Chica Masa'];
@@ -562,11 +631,23 @@ const STORIES = [
         "CHICO OPACO, un ser de pura oscuridad,\nquiere controlar el universo entero.",
         "Con su visor púrpura y su capa negra,\nabsorbe la luz de todo lo que toca.",
         "Es la antítesis del Chico Estrella.\n¡Prepárate para enfrentarlo!"
-    ]
+    ],
+    {
+        level: 9,
+        title: '¡El Espacio Final!',
+        lines: [
+            'El Chico Estrella llegó al borde del universo...',
+            '¡El Rey de los Anillos controla todo desde aquí!',
+            'Sus anillos de poder mantienen encadenadas las galaxias.',
+            '¡Solo destruyendo sus brazos alienígenas podrás liberarlas!',
+            '¡Esta es tu última batalla, Chico Estrella!'
+        ]
+    }
 ];
 
 function getStoryForLevel(levelNum) {
-    const base = STORIES[levelNum].slice();
+    const s = STORIES[levelNum];
+    const base = Array.isArray(s) ? s.slice() : s.lines.slice();
     if (selectedSkin !== 0) {
         const name = SKIN_NAMES[selectedSkin];
         base.push("Pero ahora el Chico Estrella está ocupado...\n¡Viene a ayudar " + name + "!");
@@ -592,7 +673,8 @@ function generateLevel(levelNum) {
                          levelNum === 5 ? [[600,840],[1400,1640],[2400,2640],[3400,3640],[4400,4640],[5200,5400]] :
                          levelNum === 6 ? [[700,940],[1500,1740],[2500,2740],[3500,3740],[4500,4700],[5500,5740]] :
                          levelNum === 7 ? [[600,880],[1400,1680],[2400,2680],[3400,3680],[4400,4680],[5400,5680],[6200,6440]] :
-                         [[500,800],[1200,1500],[2000,2300],[2800,3100],[3800,4100],[4800,5100],[5800,6100],[6600,6900]];
+                         levelNum === 8 ? [[500,800],[1200,1500],[2000,2300],[2800,3100],[3800,4100],[4800,5100],[5800,6100],[6600,6900]] :
+                         /* level 9 */ [[350,500],[900,1100],[1500,1700],[2200,2500],[3000,3300],[3800,4100],[4500,4800]];
         let isGap = false;
         for (const [gs, ge] of gapZones) {
             if (x >= gs && x < ge) { isGap = true; break; }
@@ -679,6 +761,13 @@ function generateLevel(levelNum) {
             {x:2900,y:350,w:2},{x:3120,y:260,w:3},{x:3360,y:180,w:2},{x:3600,y:340,w:3},
             {x:3820,y:240,w:2},{x:4060,y:360,w:3},{x:4280,y:270,w:2},{x:4520,y:190,w:3},
             {x:4760,y:340,w:2},{x:5000,y:250,w:3},{x:5240,y:180,w:2},{x:5480,y:340,w:3}
+        ],
+        // Level 9 - El Espacio Final
+        [
+            {x:150,y:380,w:2},{x:380,y:290,w:3},{x:620,y:210,w:2},{x:860,y:360,w:3},
+            {x:1150,y:250,w:2},{x:1380,y:170,w:3},{x:1750,y:330,w:2},{x:1980,y:240,w:3},
+            {x:2550,y:310,w:2},{x:2780,y:220,w:3},{x:3350,y:280,w:2},{x:3580,y:190,w:3},
+            {x:4150,y:350,w:2},{x:4380,y:260,w:3},{x:4850,y:320,w:2},{x:5100,y:230,w:3}
         ]
     ];
     
@@ -701,7 +790,9 @@ function generateLevel(levelNum) {
         // Level 7 - microchips
         [{x:200,t:'microchip'},{x:420,t:'microchip'},{x:640,t:'microchip'},{x:860,t:'microchip'},{x:1100,t:'microchip'},{x:1340,t:'microchip'},{x:1580,t:'microchip'},{x:1820,t:'microchip'},{x:2060,t:'microchip'},{x:2300,t:'microchip'},{x:2540,t:'microchip'},{x:2780,t:'microchip'},{x:3020,t:'microchip'},{x:3260,t:'microchip'},{x:3500,t:'microchip'},{x:3740,t:'microchip'},{x:3980,t:'microchip'},{x:4220,t:'microchip'},{x:4460,t:'microchip'},{x:4700,t:'microchip'}],
         // Level 8 - mind controllers
-        [{x:200,t:'mindcontrol'},{x:440,t:'mindcontrol'},{x:680,t:'mindcontrol'},{x:920,t:'mindcontrol'},{x:1160,t:'mindcontrol'},{x:1400,t:'mindcontrol'},{x:1640,t:'mindcontrol'},{x:1880,t:'mindcontrol'},{x:2120,t:'mindcontrol'},{x:2360,t:'mindcontrol'},{x:2600,t:'mindcontrol'},{x:2840,t:'mindcontrol'},{x:3080,t:'mindcontrol'},{x:3320,t:'mindcontrol'},{x:3560,t:'mindcontrol'},{x:3800,t:'mindcontrol'},{x:4040,t:'mindcontrol'},{x:4280,t:'mindcontrol'},{x:4520,t:'mindcontrol'},{x:4760,t:'mindcontrol'},{x:5000,t:'mindcontrol'},{x:5240,t:'mindcontrol'}]
+        [{x:200,t:'mindcontrol'},{x:440,t:'mindcontrol'},{x:680,t:'mindcontrol'},{x:920,t:'mindcontrol'},{x:1160,t:'mindcontrol'},{x:1400,t:'mindcontrol'},{x:1640,t:'mindcontrol'},{x:1880,t:'mindcontrol'},{x:2120,t:'mindcontrol'},{x:2360,t:'mindcontrol'},{x:2600,t:'mindcontrol'},{x:2840,t:'mindcontrol'},{x:3080,t:'mindcontrol'},{x:3320,t:'mindcontrol'},{x:3560,t:'mindcontrol'},{x:3800,t:'mindcontrol'},{x:4040,t:'mindcontrol'},{x:4280,t:'mindcontrol'},{x:4520,t:'mindcontrol'},{x:4760,t:'mindcontrol'},{x:5000,t:'mindcontrol'},{x:5240,t:'mindcontrol'}],
+        // Level 9 - space (no enemies — just the boss)
+        []
     ];
     
     for (const e of enemyConfigs[levelNum]) {
@@ -810,6 +901,15 @@ function generateLevel(levelNum) {
             { x: 3800, y: 340, w: 100, endX: 3800, endY: 170, speed: 0.010 },
             { x: 4600, y: 270, w: 100, endX: 4800, endY: 270, speed: 0.012 },
             { x: 5400, y: 320, w: 100, endX: 5400, endY: 170, speed: 0.010 },
+        ],
+        // Level 9 - El Espacio Final (floating platforms)
+        [
+            { x: 500, y: 310, w: 120, endX: 500, endY: 180, speed: 0.013 },
+            { x: 1200, y: 340, w: 100, endX: 1400, endY: 340, speed: 0.011 },
+            { x: 1900, y: 270, w: 120, endX: 1900, endY: 150, speed: 0.012 },
+            { x: 2600, y: 330, w: 100, endX: 2800, endY: 330, speed: 0.014 },
+            { x: 3400, y: 290, w: 120, endX: 3400, endY: 160, speed: 0.013 },
+            { x: 4200, y: 320, w: 100, endX: 4400, endY: 320, speed: 0.011 },
         ]
     ];
     for (const mp of movingPlatConfigs[levelNum]) {
@@ -857,7 +957,15 @@ function generateLevel(levelNum) {
         { x: Math.floor(width * 0.66), y: 460, activated: false, animTimer: 0 }
     ];
     
-    return { platforms, enemies, coins, powerUps, burgers, drops: [], checkpoints, width, bossZone: width - 700 };
+    // Level 9: focused space arena
+    let levelWidth = width;
+    let levelBossZone = levelWidth - 700;
+    if (levelNum === 9) {
+        levelWidth = 6200;
+        levelBossZone = 5500;
+    }
+
+    return { platforms, enemies, coins, powerUps, burgers, drops: [], checkpoints, width: levelWidth, bossZone: levelBossZone };
 }
 
 // ---- PLAYER ----
@@ -1038,6 +1146,28 @@ function createBoss(levelNum) {
             alive: true,
             teleportTimer: 0,
             darkPulseTimer: 0
+        },
+        { // Rey de los Anillos (level 10, index 9)
+            name: 'Rey de los Anillos',
+            type: 'reydelosanillos',
+            hp: 30,
+            maxHp: 30,
+            w: 200,
+            h: 280,
+            vx: 0,
+            vy: 0,
+            armSide: 'right',
+            armY: 0,
+            armSlamSpeed: 4,
+            armState: 'idle',
+            slamTimer: 0,
+            ringAngle: 0,
+            phase: 1,
+            phase2Active: false,
+            projectiles: [],
+            animTimer: 0,
+            invincible: 0,
+            alive: true
         }
     ];
     return bosses[levelNum];
@@ -1055,7 +1185,11 @@ function startLevel(num) {
     particles = [];
     playerProjectiles = [];
     gameState = 'playing';
-    startMusic();
+    if (num === 9) {
+        startFinalMusic();
+    } else {
+        startMusic();
+    }
     savedCheckpoint = { level: num, score: score, x: 80 };
     
     // Add platforms in boss zone for more movement space
@@ -1078,7 +1212,7 @@ function startLevel(num) {
 function startBossFight() {
     gameState = 'bossFight';
     boss = createBoss(currentLevel);
-    boss.x = level.bossZone + 400;
+    boss.x = (currentLevel === 9) ? level.bossZone + 230 : level.bossZone + 400;
     boss.y = 500 - boss.h;
     // Spawn hamburgers one at a time during boss fight (5 total)
     bossBurgerCount = 0;
@@ -3338,9 +3472,7 @@ function drawPEJ20(b) {
     for (let i = 0; i < 4; i++) {
         ctx.beginPath(); ctx.moveTo(cx - 6 + i * 4, y + H * 0.25); ctx.lineTo(cx - 6 + i * 4, y + H * 0.25 + 6); ctx.stroke();
     }
-    // HP bar
-    ctx.fillStyle = '#333'; ctx.fillRect(cx - 25, y - 20, 50, 6);
-    ctx.fillStyle = '#f44'; ctx.fillRect(cx - 25, y - 20, 50 * (b.hp / b.maxHp), 6);
+    // HP bar removed (shown in bottom UI instead)
     ctx.restore();
 }
 
@@ -3426,9 +3558,7 @@ function drawLarvaRayo(b) {
     for (let i = 0; i < 5; i++) {
         ctx.fillRect(cx - 8 + i * 4, y + H * 0.23, 3, 3);
     }
-    // HP bar
-    ctx.fillStyle = '#333'; ctx.fillRect(cx - 25, y - 25, 50, 6);
-    ctx.fillStyle = '#f44'; ctx.fillRect(cx - 25, y - 25, 50 * (b.hp / b.maxHp), 6);
+    // HP bar removed (shown in bottom UI instead)
     ctx.restore();
 }
 
@@ -3503,10 +3633,120 @@ function drawChicoOpaco(b) {
     ctx.moveTo(cx + 10, y + H * 0.13); ctx.lineTo(cx + 3, y + H * 0.12);
     ctx.lineTo(cx + 3, y + H * 0.17); ctx.lineTo(cx + 10, y + H * 0.16);
     ctx.closePath(); ctx.fill();
-    // HP bar
-    ctx.fillStyle = '#333'; ctx.fillRect(cx - 20, y - 14, 40, 6);
-    ctx.fillStyle = '#E040FB'; ctx.fillRect(cx - 20, y - 14, 40 * (b.hp / b.maxHp), 6);
+    // HP bar removed (shown in bottom UI instead)
     ctx.restore();
+}
+
+function drawReyDelosAnillos(b) {
+  if (!b || b.dead) return;
+  const bx = Math.round(b.x - camera.x);
+  const by = b.y;
+
+  ctx.save();
+
+  // Crown/helmet
+  ctx.fillStyle = '#FFD700';
+  ctx.beginPath();
+  ctx.moveTo(bx + b.w/2 - 50, by + 10);
+  ctx.lineTo(bx + b.w/2 - 30, by - 40);
+  ctx.lineTo(bx + b.w/2,      by - 60);
+  ctx.lineTo(bx + b.w/2 + 30, by - 40);
+  ctx.lineTo(bx + b.w/2 + 50, by + 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Head
+  ctx.fillStyle = '#4A0080';
+  ctx.fillRect(bx + b.w/2 - 45, by + 10, 90, 70);
+
+  // Eyes (glowing)
+  ctx.fillStyle = '#FF0000';
+  ctx.shadowColor = '#FF0000';
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.ellipse(bx + b.w/2 - 18, by + 38, 12, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(bx + b.w/2 + 18, by + 38, 12, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Torso
+  ctx.fillStyle = '#2E0050';
+  ctx.fillRect(bx + b.w/2 - 55, by + 80, 110, 120);
+
+  // Chest armor plates
+  ctx.fillStyle = '#8B0000';
+  ctx.fillRect(bx + b.w/2 - 40, by + 90, 35, 50);
+  ctx.fillRect(bx + b.w/2 + 5,  by + 90, 35, 50);
+
+  // Rings orbiting
+  b.ringAngle = (b.ringAngle || 0) + 0.04;
+  for (let r = 0; r < 3; r++) {
+    const ang = b.ringAngle + r * (Math.PI * 2 / 3);
+    const rx = bx + b.w/2 + Math.cos(ang) * 70;
+    const ry = by + 140 + Math.sin(ang) * 20;
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(rx, ry, 18, 8, ang, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Lower body / legs
+  ctx.fillStyle = '#3B0070';
+  ctx.fillRect(bx + b.w/2 - 40, by + 200, 35, 80);
+  ctx.fillRect(bx + b.w/2 + 5,  by + 200, 35, 80);
+
+  // Arm — the slamming arm
+  const sides = b.phase2Active ? ['left', 'right'] : [b.armSide];
+  sides.forEach(side => {
+    const armBaseY = by + b.h * 0.35;
+    const armDrawX = bx + (side === 'left' ? -160 : b.w + 60);
+    const armDrawY = armBaseY + (side === b.armSide ? b.armY : b.armY * 0.7);
+
+    // Upper arm
+    ctx.strokeStyle = '#4A0080';
+    ctx.lineWidth = 18;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(side === 'left' ? bx + 10 : bx + b.w - 10, armBaseY);
+    ctx.lineTo(armDrawX + 90, armDrawY + 30);
+    ctx.stroke();
+
+    // Forearm
+    ctx.strokeStyle = '#2E0050';
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.moveTo(armDrawX + 90, armDrawY + 30);
+    ctx.lineTo(armDrawX + 90, armDrawY + 60);
+    ctx.stroke();
+
+    // Fist / claw
+    ctx.fillStyle = '#8B0000';
+    ctx.shadowColor = '#FF0000';
+    ctx.shadowBlur = b.armState === 'slamming' ? 20 : 0;
+    ctx.beginPath();
+    ctx.arc(armDrawX + 90, armDrawY + 75, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Claws
+    ctx.fillStyle = '#FF6666';
+    for (let c = -1; c <= 1; c++) {
+      ctx.beginPath();
+      ctx.moveTo(armDrawX + 90 + c * 12, armDrawY + 75);
+      ctx.lineTo(armDrawX + 90 + c * 14, armDrawY + 100);
+      ctx.lineTo(armDrawX + 90 + c * 8, armDrawY + 98);
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+
+  ctx.restore();
 }
 
 function drawEnemy(e) {
@@ -4371,7 +4611,7 @@ function drawBackground(theme, levelNum) {
             ctx.beginPath(); ctx.arc(lx, canvas.height - 105, 6, 0, Math.PI * 2); ctx.fill();
             ctx.globalAlpha = 1;
         }
-    } else {
+    } else if (levelNum === 8) {
         // Dark void / cosmic dimension (Level 9 - Dimensión Opaca)
         // Dark swirling void
         ctx.fillStyle = '#0a000a';
@@ -4405,6 +4645,54 @@ function drawBackground(theme, levelNum) {
             ctx.fillStyle = 'rgba(224, 64, 251, 0.08)';
             ctx.beginPath(); ctx.arc(ox, oy, 20 + i * 3, 0, Math.PI * 2); ctx.fill();
         }
+    } else if (levelNum === 9) {
+        // Deep space gradient
+        const spaceGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        spaceGrad.addColorStop(0, '#000010');
+        spaceGrad.addColorStop(0.5, '#0D0D2B');
+        spaceGrad.addColorStop(1, '#1A0030');
+        ctx.fillStyle = spaceGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Stars
+        for (let s = 0; s < 120; s++) {
+            const sx = ((s * 137.5 + 50) % canvas.width);
+            const sy = ((s * 97.3 + 20) % (canvas.height * 0.8));
+            const brightness = 0.4 + (s % 5) * 0.12;
+            ctx.fillStyle = `rgba(255,255,255,${brightness})`;
+            const sr = (s % 3 === 0) ? 2 : 1;
+            ctx.beginPath();
+            ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Nebula glow
+        const nebulaGrad = ctx.createRadialGradient(canvas.width * 0.3, 100, 10, canvas.width * 0.3, 100, 180);
+        nebulaGrad.addColorStop(0, 'rgba(128,0,255,0.15)');
+        nebulaGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = nebulaGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const nebulaGrad2 = ctx.createRadialGradient(canvas.width * 0.7, 80, 5, canvas.width * 0.7, 80, 120);
+        nebulaGrad2.addColorStop(0, 'rgba(255,50,50,0.12)');
+        nebulaGrad2.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = nebulaGrad2;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Distant planet
+        ctx.fillStyle = '#8B0000';
+        ctx.shadowColor = '#FF4500';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(canvas.width * 0.8, 80, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Ground — dark red alien rock
+        ctx.fillStyle = '#8B0000';
+        ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+        ctx.fillStyle = '#6B0000';
+        ctx.fillRect(0, canvas.height - 45, canvas.width, 8);
     }
 }
 
@@ -4765,6 +5053,7 @@ function damagePlayer(dmg) {
         lives--;
         if (lives <= 0) {
             setTimeout(() => {
+                if (currentLevel === 9) currentLevel = 0;
                 gameState = 'gameOver'; gameOverTimer = 0; stopMusic();
                 for (const k in keys) keys[k] = false;
                 // Go directly to game over options
@@ -5886,9 +6175,50 @@ function updateBoss() {
                 if (!isChicoInvisibleAndHidden()) damagePlayer(1);
             }
         }
+    } else if (boss.type === 'reydelosanillos') {
+        // Phase 2 at half HP
+        if (boss.hp <= 15 && !boss.phase2Active) {
+            boss.phase2Active = true;
+        }
+
+        // Arm slam AI
+        boss.slamTimer = (boss.slamTimer || 0) + 1;
+        const reyInterval = boss.phase2Active ? 90 : 150;
+
+        if (boss.armState === 'idle') {
+            if (boss.slamTimer >= reyInterval) {
+                boss.slamTimer = 0;
+                boss.armState = 'slamming';
+                boss.armSide = boss.armSide === 'right' ? 'left' : 'right';
+            }
+        } else if (boss.armState === 'slamming') {
+            boss.armY += boss.armSlamSpeed;
+            if (boss.armY >= 100) {
+                boss.armY = 100;
+                boss.armState = 'retracting';
+
+                // Check player hit by arm slam
+                const reySides = boss.phase2Active ? ['left', 'right'] : [boss.armSide];
+                reySides.forEach(side => {
+                    const armWorldX = (side === 'left') ?
+                        boss.x - 70 :
+                        boss.x + boss.w + 150;
+                    const armWorldY = boss.y + boss.h * 0.35 + boss.armY + 75;
+                    if (!player.dead && !isChicoInvisibleAndHidden() &&
+                        Math.abs((player.x + player.w / 2) - armWorldX) < 90 &&
+                        Math.abs((player.y + player.h / 2) - armWorldY) < 60) {
+                        damagePlayer(boss.phase2Active ? 2 : 1);
+                    }
+                });
+            }
+        } else if (boss.armState === 'retracting') {
+            boss.armY -= boss.armSlamSpeed * 2;
+            if (boss.armY <= 0) {
+                boss.armY = 0;
+                boss.armState = 'idle';
+            }
+        }
     }
-    
-    // Update projectiles
     for (let i = boss.projectiles.length - 1; i >= 0; i--) {
         const p = boss.projectiles[i];
         p.x += p.vx;
@@ -5933,7 +6263,29 @@ function updateBoss() {
                 boss.alive = false;
                 score += 1000;
                 sfxWin();
-                spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#FFD700', 20, 5);
+                if (boss.type === 'reydelosanillos') {
+                    for (let ri = 0; ri < 60; ri++) {
+                        const hue = (ri / 60) * 360;
+                        const rAng = (Math.PI * 2 / 60) * ri;
+                        if (particles.length < MAX_PARTICLES) particles.push({
+                            x: boss.x + boss.w / 2, y: boss.y + boss.h / 2,
+                            vx: Math.cos(rAng) * (7 + Math.random() * 7),
+                            vy: Math.sin(rAng) * (7 + Math.random() * 7),
+                            life: 50 + Math.random() * 20, maxLife: 70,
+                            color: `hsl(${hue}, 100%, 60%)`, size: 8 + Math.random() * 6
+                        });
+                    }
+                    for (let bi = 0; bi < 15; bi++) {
+                        level.burgers.push({
+                            x: boss.x + Math.random() * boss.w,
+                            y: boss.y + Math.random() * 60,
+                            collected: false,
+                            animTimer: Math.random() * 100
+                        });
+                    }
+                } else {
+                    spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, '#FFD700', 20, 5);
+                }
                 shakeTimer = 30;
                 shakeIntensity = 8;
                 screenFlash = { timer: 15, color: '#fff' };
@@ -5941,10 +6293,6 @@ function updateBoss() {
                 levelCompleteTimer = 0;
                 stopMusic();
             }
-        }
-    }
-    
-    // Jump on boss
     if (!player.dead && !isChicoInvisibleAndHidden() && player.vy > 0 && rectCollision(player, {x:boss.x,y:boss.y,w:boss.w,h:boss.h})) {
         if (player.y + player.h < boss.y + boss.h * 0.4 && boss.invincible === 0) {
             boss.hp -= 1;
@@ -6620,10 +6968,17 @@ function update() {
                         fadeIn();
                     });
                 }
-            } else {
+            } else if (currentLevel === 8) {
                 fadeOut(() => {
                     initBonus();
                     gameState = 'bonus';
+                    fadeIn();
+                });
+            } else {
+                // currentLevel === 9 — final victory
+                fadeOut(() => {
+                    gameState = 'victory';
+                    for (const k in keys) keys[k] = false;
                     fadeIn();
                 });
             }
@@ -6977,7 +7332,7 @@ function drawLevelPicker() {
     // Close button
     const closeBtnW = 160, closeBtnH = 44;
     const cbx = canvas.width / 2 - closeBtnW / 2;
-    const cby = startY + 3 * (btnH + gap) + 10;
+    const cby = startY + Math.ceil(LEVEL_THEMES.length / cols) * (btnH + gap) + 10;
     levelPickerButtons.push({ x: cbx, y: cby, w: closeBtnW, h: closeBtnH, level: -1 });
     ctx.fillStyle = '#2a0000';
     ctx.strokeStyle = '#ff4444';
@@ -7401,6 +7756,7 @@ function drawGameplay() {
         else if (boss.type === 'pej20') drawPEJ20(boss);
         else if (boss.type === 'larvarayo') drawLarvaRayo(boss);
         else if (boss.type === 'chicoopaco') drawChicoOpaco(boss);
+        else if (boss.type === 'reydelosanillos') drawReyDelosAnillos(boss);
         
         // Projectiles
         for (const p of boss.projectiles) {
@@ -7698,7 +8054,7 @@ function drawLevelComplete() {
     ctx.font = 'bold 40px Arial';
     ctx.fillText('¡NIVEL COMPLETADO!', canvas.width/2, canvas.height/2 - 30);
     
-    const bossNames = ['¡Mocusón fue derrotado!', '¡Romecio fue destruido!', '¡El Cambia Formas fue vencido!', '¡El Monstruo fue iluminado!', '¡Maelado se derritió!', '¡Timbroso fue silenciado!', '¡P.E.J. 2.0 fue desactivado!', '¡Larva Rayo fue derrotada!', '¡Chico Opaco fue destruido!'];
+    const bossNames = ['¡Mocusón fue derrotado!', '¡Romecio fue destruido!', '¡El Cambia Formas fue vencido!', '¡El Monstruo fue iluminado!', '¡Maelado se derritió!', '¡Timbroso fue silenciado!', '¡P.E.J. 2.0 fue desactivado!', '¡Larva Rayo fue derrotada!', '¡Chico Opaco fue destruido!', '¡El Rey de los Anillos fue destruido!'];
     ctx.fillStyle = '#fff';
     ctx.font = '22px Arial';
     ctx.fillText(bossNames[currentLevel], canvas.width/2, canvas.height/2 + 20);
@@ -7840,7 +8196,7 @@ function updateBonus() {
 
     // End after ~30 seconds
     if (bonusTimer > 1800 && transitionDir === 0) {
-        if (currentLevel >= 8) {
+        if (currentLevel >= 9) {
             fadeOut(() => {
                 gameState = 'victory';
                 for (const k in keys) keys[k] = false;
