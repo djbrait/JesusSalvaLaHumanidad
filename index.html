@@ -289,7 +289,7 @@ function makePlayer(startX) {
         hp:5,maxHp:5,invincible:0,attackTimer:0,attackCD:0,
         animTimer:0,dead:false,jumpsLeft:2,maxJumps:2,
         dashCD:0,dashTimer:0,isDashing:false,dashDir:1,
-        shieldTimer:0,shieldCD:0,faith:0,maxFaith:100,haloT:0,
+        shieldCD:0,faith:0,maxFaith:100,haloT:0,crouching:false,
         _jh:false,_dh:false,_xh:false};
 }
 
@@ -310,7 +310,7 @@ function fadeIn(){ transDir=-1; transAlpha=1; }
 // ---- GAME START ----
 function startLevel() {
     level=makeLevel(); player=makePlayer(savedCP.x); boss=null;
-    bossTriggered=false; playerProj=[]; bossProj=[]; particles=[];
+    bossTriggered=false; playerProj=[]; bossProj=[]; particles=[]; blessingWaves=[];
     camera.x=0; camera.y=0; gameState='playing';
     stopMusic(); setTimeout(function(){ startMusic(false); }, 100);
 }
@@ -362,7 +362,6 @@ function updPlayer() {
     else player.isDashing=false;
     if (player.dashCD>0)   player.dashCD--;
     if (player.shieldCD>0) player.shieldCD--;
-    if (player.shieldTimer>0){player.shieldTimer--;player.invincible=Math.max(player.invincible,1);}
     if (player.invincible>0) player.invincible--;
     if (player.attackCD>0)   player.attackCD--;
     if (player.attackTimer>0)player.attackTimer--;
@@ -371,11 +370,17 @@ function updPlayer() {
         if      (isDown('ArrowLeft')) {player.vx=-MSPD;player.facing=-1;}
         else if (isDown('ArrowRight')){player.vx= MSPD;player.facing= 1;}
         else player.vx*=0.78;
-        if (isDown('Space')&&!player._jh&&player.jumpsLeft>0) {
+        var wantJump=isDown('Space')||isDown('ArrowUp');
+        if (wantJump&&!player._jh&&player.jumpsLeft>0&&!player.crouching) {
             player.vy=JUMP; player.jumpsLeft--; player._jh=true; sfxJump();
             spawnPart(player.x+player.w/2,player.y+player.h,'#87CEEB',6,2);
         }
-        if (!isDown('Space')) player._jh=false;
+        if (!wantJump) player._jh=false;
+        if (isDown('ArrowDown')&&player.onGround&&!player.crouching) {
+            player.crouching=true; player.y+=20; player.h=30;
+        } else if (!isDown('ArrowDown')&&player.crouching) {
+            player.crouching=false; player.y-=20; player.h=50;
+        }
         if ((isDown('ShiftLeft')||isDown('ShiftRight'))&&player.dashCD<=0&&!player._dh) {
             player.dashTimer=DDUR; player.dashDir=player.facing;
             player.dashCD=35; player._dh=true; sfxDash();
@@ -385,8 +390,8 @@ function updPlayer() {
         if (isDown('KeyZ')&&player.attackCD<=0) {
             throwWater(); player.attackCD=18; player.attackTimer=10;
         }
-        if (isDown('KeyX')&&player.shieldCD<=0&&player.faith>=50&&!player._xh) {
-            castBlessing(); player.shieldCD=160; player._xh=true;
+        if (isDown('KeyX')&&player.shieldCD<=0&&player.faith>=30&&!player._xh) {
+            castBlessing(); player.shieldCD=140; player._xh=true;
         }
         if (!isDown('KeyX')) player._xh=false;
     }
@@ -457,22 +462,24 @@ function throwWater() {
     }
     playerProj.push({x:ox,y:oy,vx:vx,vy:vy,w:12,h:12,alive:true,anim:0});
 }
+var blessingWaves=[];
 function castBlessing() {
-    player.faith=Math.max(0,player.faith-50);
-    flashT=18; flashC='rgba(255,255,180,0.55)';
-    sfxAngel();
+    player.faith=Math.max(0,player.faith-30);
+    flashT=20; flashC='rgba(255,255,200,0.6)';
+    sfxVictory();
     var px=player.x+player.w/2, py=player.y+player.h/2;
-    spawnPart(px,py,'#FFD700',20,5);
-    spawnPart(px,py,'#ffffff',14,4);
+    spawnPart(px,py,'#FFD700',22,5);
+    spawnPart(px,py,'#ffffff',16,4);
+    blessingWaves.push({x:px,y:py,r:10,maxR:400,life:40});
     if (level) {
         for (var i=0;i<level.enemies.length;i++) {
-            var e=level.enemies[i]; if (!e.alive||e.converted||e.praying) continue;
+            var e=level.enemies[i]; if (!e.alive||e.converted) continue;
             var ex=e.x+e.w/2, ey=e.y+e.h/2;
             var d=Math.sqrt((ex-px)*(ex-px)+(ey-py)*(ey-py));
             if (d<=380) {
                 e.converted=true; e.praying=true; e.convertTimer=0; e.vx=0;
                 spawnConvert(ex,ey); score+=50; comboCount++; comboTimer=120;
-                player.faith=Math.min(player.maxFaith,player.faith+15);
+                player.faith=Math.min(player.maxFaith,player.faith+12);
             }
         }
     }
@@ -913,8 +920,24 @@ function drawCheckpoints() {
 }
 
 // ---- DRAW JESUS ----
-function drawJesus(x,y,facing,anim,attackT,invinc,shieldT,faith,onGround) {
+function drawJesus(x,y,facing,anim,attackT,invinc,shieldT,faith,onGround,crouching) {
     if (invinc>0&&Math.floor(invinc/5)%2===0) return;
+    if (crouching) {
+        ctx.save(); ctx.translate(x,y+20); ctx.scale(facing,1);
+        ctx.scale(1,0.6);
+        var hg2=0.55+Math.sin(anim*0.06)*0.3;
+        ctx.strokeStyle='rgba(255,215,0,'+hg2+')'; ctx.lineWidth=4;
+        ctx.beginPath();ctx.arc(0,-45,15,0,Math.PI*2);ctx.stroke();
+        ctx.fillStyle='#f0ede0';
+        ctx.beginPath();ctx.moveTo(-11,-22);ctx.lineTo(11,-22);ctx.lineTo(13,12);ctx.lineTo(-13,12);ctx.fill();
+        ctx.fillStyle='#c4a882';ctx.beginPath();ctx.ellipse(0,-36,11,13,0,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#5a3020';ctx.beginPath();ctx.ellipse(0,-46,11,7,0,0,Math.PI*2);ctx.fill();
+        ctx.fillRect(-12,-47,5,30); ctx.fillRect(7,-47,5,30);
+        ctx.fillStyle='#fff'; ctx.fillRect(-5,-39,4,3); ctx.fillRect(1,-39,4,3);
+        ctx.fillStyle='#3a2510'; ctx.fillRect(-4,-38,3,4); ctx.fillRect(2,-38,3,4);
+        ctx.restore();
+        return;
+    }
     var t=anim*0.15, ls=onGround?Math.sin(t)*7:0, as=onGround?Math.sin(t+Math.PI)*5:0;
     ctx.save(); ctx.translate(x,y); ctx.scale(facing,1);
     if (shieldT>0) {
@@ -1155,6 +1178,20 @@ function drawParticles() {
     }
     ctx.globalAlpha=1;
 }
+function drawBlessingWaves() {
+    for (var i=blessingWaves.length-1;i>=0;i--) {
+        var w=blessingWaves[i];
+        w.r+=w.maxR/w.life; w.life--;
+        if (w.life<=0){blessingWaves.splice(i,1);continue;}
+        var alpha=w.life/40*0.7;
+        ctx.globalAlpha=alpha;
+        ctx.strokeStyle='#FFD700'; ctx.lineWidth=4;
+        ctx.beginPath();ctx.arc(w.x-camera.x,w.y,w.r,0,Math.PI*2);ctx.stroke();
+        ctx.strokeStyle='rgba(255,255,200,0.5)'; ctx.lineWidth=2;
+        ctx.beginPath();ctx.arc(w.x-camera.x,w.y,w.r*0.7,0,Math.PI*2);ctx.stroke();
+        ctx.globalAlpha=1;
+    }
+}
 
 // ---- HUD ----
 function drawHUD() {
@@ -1169,7 +1206,7 @@ function drawHUD() {
     ctx.fillStyle='rgba(255,215,0,0.7)'; ctx.fillRect(14,70,172,10); ctx.fillStyle='rgba(255,215,0,1)'; ctx.fillRect(14,70,172*(player.faith/100),10);
     ctx.strokeStyle='rgba(255,215,0,0.5)'; ctx.strokeRect(14,70,172,10);
     ctx.fillStyle='#fff'; ctx.font='11px monospace'; ctx.fillText('fe',14,68);
-    if (player.faith>=50) { ctx.fillStyle='rgba(255,215,0,0.85)'; ctx.fillText('[X] bendición',14,92); }
+    if (player.faith>=30) { ctx.fillStyle='rgba(255,215,0,0.85)'; ctx.fillText('[X] bendición',14,92); }
     var hpct=Math.max(0,Math.min(1,(camera.x-HELL_X+200)/300));
     if (hpct>0.05&&!(boss&&boss.active)) {
         ctx.globalAlpha=hpct*0.85; ctx.fillStyle='#ff2200';
@@ -1365,7 +1402,8 @@ function draw() {
     drawWater();
     drawFireballs();
     drawParticles();
-    drawJesus(player.x-camera.x+player.w/2,player.y,player.facing,player.animTimer,player.attackTimer,player.invincible,player.shieldTimer,player.faith,player.onGround);
+    drawJesus(player.x-camera.x+player.w/2,player.y,player.facing,player.animTimer,player.attackTimer,player.invincible,0,player.faith,player.onGround,player.crouching);
+    drawBlessingWaves();
     if (st==='paused') drawPause();
     if (st==='playing'||st==='bossFight'||st==='paused') { drawHUD(); drawBossHUD(); }
     if (fadeAlpha>0) { ctx.fillStyle='rgba(0,0,0,'+fadeAlpha+')'; ctx.fillRect(0,0,960,540); }
