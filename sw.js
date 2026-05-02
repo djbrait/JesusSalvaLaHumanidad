@@ -1,47 +1,38 @@
-const CACHE_NAME = 'chico-estrella-v35';
+const CACHE_NAME = 'jesus-salva-v1';
 const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon-192-maskable.png',
+  '/icons/icon-512-maskable.png'
 ];
 
-// Install: cachear assets y activar inmediatamente
-self.addEventListener('install', e => {
+self.addEventListener('install', function(e) {
   e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(function(c) { return c.addAll(ASSETS); })
   );
+  self.skipWaiting();
 });
 
-// Activate: limpiar caches viejos y tomar control
-self.addEventListener('activate', e => {
+self.addEventListener('activate', function(e) {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys
-        .filter(k => k !== CACHE_NAME)
-        .map(k => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
+    caches.keys().then(function(keys) {
+      return Promise.all(keys.filter(function(k){return k!==CACHE_NAME;}).map(function(k){return caches.delete(k);}));
+    })
   );
+  self.clients.claim();
 });
 
-// Fetch: network-first (siempre busca la versión nueva, cache como fallback offline)
-self.addEventListener('fetch', e => {
+self.addEventListener('fetch', function(e) {
   e.respondWith(
-    fetch(e.request)
-      .then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        return response;
-      })
-      .catch(() => caches.match(e.request))
+    fetch(e.request).then(function(r) {
+      var rc = r.clone();
+      caches.open(CACHE_NAME).then(function(c) { c.put(e.request, rc); });
+      return r;
+    }).catch(function() {
+      return caches.match(e.request);
+    })
   );
-});
-
-// Permitir skipWaiting desde el cliente
-self.addEventListener('message', e => {
-  if (e.data === 'skipWaiting') self.skipWaiting();
 });

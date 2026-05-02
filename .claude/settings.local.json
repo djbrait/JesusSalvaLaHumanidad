@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Proyectos\\\\JuegoJesusSaveTheHumanity\" -Force)",
+      "Bash(Select-Object Name, BaseName)",
+      "Bash(Sort-Object Name)",
+      "PowerShell(ls *)"
+    ]
+  }
+}
