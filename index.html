@@ -406,7 +406,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '1.7';
+const GAME_VERSION = '1.8';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -3734,10 +3734,8 @@ function drawReyDelosAnillos(b) {
     ctx.stroke();
   }
 
-  // Main arm
+  // Main arm (single arm, tracks player)
   drawArm(b.fistWorldX, b.armSide || 'left');
-  // Phase 2 second arm
-  if (b.phase2Active && b.fist2WorldX !== undefined) drawArm(b.fist2WorldX, b.armSide === 'left' ? 'right' : 'left');
 
   // === BODY (triangular fan shape) ===
   const bodyTopY = by + 64;
@@ -6329,14 +6327,12 @@ function updateBoss() {
             boss.armSide = playerCX > bossWorldCX ? 'right' : 'left';
             // Fist hovers menacingly over player (slow track)
             boss.fistWorldX += (playerCX - boss.fistWorldX) * 0.05;
-            if (boss.phase2Active) boss.fist2WorldX += (playerCX - boss.fist2WorldX) * 0.05;
 
             if (boss.slamTimer >= reyInterval) {
                 boss.slamTimer = 0;
                 boss.armState = 'slamming';
                 // Lock directly on player
                 boss.fistWorldX = playerCX;
-                if (boss.phase2Active) boss.fist2WorldX = playerCX + (Math.random() > 0.5 ? 95 : -95);
             }
         } else if (boss.armState === 'slamming') {
             const slamSpeed = boss.phase2Active ? boss.armSlamSpeed * 2 : boss.armSlamSpeed;
@@ -6365,10 +6361,6 @@ function updateBoss() {
                 if (!player.dead && !isChicoInvisibleAndHidden() &&
                     Math.abs(playerCX - boss.fistWorldX) < 68 && player.y + player.h > 420) {
                     damagePlayer(boss.phase2Active ? 3 : 2);
-                }
-                if (boss.phase2Active && !player.dead && !isChicoInvisibleAndHidden() &&
-                    Math.abs(playerCX - boss.fist2WorldX) < 68 && player.y + player.h > 420) {
-                    damagePlayer(3);
                 }
             }
         } else if (boss.armState === 'retracting') {
