@@ -66,7 +66,7 @@ const GAME_VERSION = 'v1.0';
 // ---- AUDIO ----
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
-function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
 function playTone(freq, dur, type, vol, delay) {
     if (!sfxEnabled) return;
     ensureAudio();
@@ -893,7 +893,7 @@ function drawJesus(x,y,facing,anim,attackT,invinc,shieldT,faith,onGround) {
     ctx.fillStyle='#7a5520';
     ctx.fillRect(-10,39+ls,11,5); ctx.fillRect(0,39-ls,11,5);
     ctx.fillStyle='#f0ede0';
-    ctx.save();ctx.translate(-13,-16);ctx.rotate(as*0.04);ctx.fillRect(-4,0,8,20);ctx.restore();
+    ctx.save();ctx.translate(-13,-16);ctx.rotate(as*0.04);ctx.fillRect(-4,0,8,20);ctx.fillStyle='#b8946e';ctx.beginPath();ctx.arc(-1,21,4,0,Math.PI*2);ctx.fill();ctx.restore();
     ctx.save();ctx.translate(13,-16);ctx.rotate(-as*0.04-(attackT>0?0.7:0));
     ctx.fillRect(-4,0,8,20);
     ctx.fillStyle='#b8946e';ctx.beginPath();ctx.arc(1,21,4,0,Math.PI*2);ctx.fill();
@@ -1122,15 +1122,15 @@ function drawHUD() {
     if (score>0) {
         ctx.fillStyle='rgba(255,215,0,0.85)'; ctx.font='bold 15px monospace'; ctx.textAlign='right'; ctx.fillText(score+' pts',956,22);
     }
-    if (combo>1) {
+    if (comboCount>1) {
         var fa=Math.min(1,comboTimer/30); ctx.globalAlpha=fa;
-        ctx.fillStyle='#FFD700'; ctx.font='bold '+(14+combo)+'px monospace'; ctx.textAlign='right';
-        ctx.fillText('COMBO x'+combo+'!',956,40); ctx.globalAlpha=1;
+        ctx.fillStyle='#FFD700'; ctx.font='bold '+(14+comboCount)+'px monospace'; ctx.textAlign='right';
+        ctx.fillText('COMBO x'+comboCount+'!',956,40); ctx.globalAlpha=1;
     }
     ctx.textAlign='left';
 }
 function drawBossHUD() {
-    if (!boss||!boss.active) return;
+    if (!boss) return;
     ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(220,8,520,36);
     ctx.fillStyle='#cc0000'; ctx.fillRect(226,15,507*(boss.hp/boss.maxHp),22);
     ctx.strokeStyle='#ff4444'; ctx.strokeRect(226,15,507,22);
@@ -1305,11 +1305,11 @@ function draw() {
     drawHealth();
     drawCheckpoints();
     for (var ei=0;ei<level.enemies.length;ei++) drawPossessed(level.enemies[ei]);
-    if (boss&&(boss.active||boss.defeated||boss.transforming)) drawDevil(boss);
+    if (boss) drawDevil(boss);
     drawWater();
     drawFireballs();
     drawParticles();
-    drawJesus(player.x-camera.x+player.w/2,player.y+player.h,player.facing,player.animTimer,player.attackTimer,player.invincible,player.shieldTimer,player.faith,player.onGround);
+    drawJesus(player.x-camera.x+player.w/2,player.y,player.facing,player.animTimer,player.attackTimer,player.invincible,player.shieldTimer,player.faith,player.onGround);
     if (st==='paused') drawPause();
     if (st==='playing'||st==='bossFight'||st==='paused') { drawHUD(); drawBossHUD(); }
     if (fadeAlpha>0) { ctx.fillStyle='rgba(0,0,0,'+fadeAlpha+')'; ctx.fillRect(0,0,960,540); }
