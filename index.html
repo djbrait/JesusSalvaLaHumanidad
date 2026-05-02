@@ -410,7 +410,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '2.1';
+const GAME_VERSION = '2.2';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -7893,18 +7893,23 @@ function drawMarketScreen() {
     ctx.textAlign = 'right';
     ctx.fillText('⭐ ' + totalCoins, canvas.width - 25, 40);
 
-    // Character cards
+    // Character cards — grid of 4 per row
     const numSkins = 10;
-    const cardW = 100, cardH = 300;
-    const gap = 12;
-    const totalW = cardW * numSkins + gap * (numSkins - 1);
-    const startX = (canvas.width - totalW) / 2;
-    const cardY = 80;
+    const perRow = 4;
+    const cardW = 110, cardH = 260;
+    const gap = 16;
+    const totalRowW = cardW * perRow + gap * (perRow - 1);
+    const startX = (canvas.width - totalRowW) / 2;
+    const row0Y = 72;
+    const rowGap = cardH + 18;
 
     marketButtons = [];
 
     for (let i = 0; i < numSkins; i++) {
-        const cx2 = startX + i * (cardW + gap);
+        const col = i % perRow;
+        const row = Math.floor(i / perRow);
+        const cx2 = startX + col * (cardW + gap);
+        const cardY = row0Y + row * rowGap;
         const isSelected = marketSelection === i;
         const owned = unlockedSkins[i];
         const inUse = selectedSkin === i;
@@ -7928,7 +7933,7 @@ function drawMarketScreen() {
 
         // Character preview
         const previewX = cx2 + cardW/2 - 20;
-        const previewY = cardY + 30;
+        const previewY = cardY + 20;
         ctx.save();
         skinDrawFns[i](previewX, previewY, 40, 70, 1, t * 10, false, 0);
         ctx.restore();
@@ -7937,23 +7942,23 @@ function drawMarketScreen() {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 11px Arial';
-        ctx.fillText(skinNames[i], cx2 + cardW/2, cardY + 125);
+        ctx.fillText(skinNames[i], cx2 + cardW/2, cardY + 108);
 
         // Price or status
         ctx.font = 'bold 12px Arial';
         if (owned) {
             ctx.fillStyle = '#4CAF50';
-            ctx.fillText('TUYO', cx2 + cardW/2, cardY + 145);
+            ctx.fillText('TUYO', cx2 + cardW/2, cardY + 125);
         } else {
             ctx.fillStyle = '#FFD700';
-            ctx.fillText('⭐ ' + skinPrices[i], cx2 + cardW/2, cardY + 145);
+            ctx.fillText('⭐ ' + skinPrices[i], cx2 + cardW/2, cardY + 125);
         }
 
         // Action button
-        const btnY = cardY + cardH - 55;
+        const btnY = cardY + cardH - 46;
         const btnW2 = cardW - 16;
         const btnX2 = cx2 + 8;
-        const btnH2 = 32;
+        const btnH2 = 30;
 
         let btnLabel, btnColor, btnTextColor;
         if (inUse) {
@@ -7981,15 +7986,19 @@ function drawMarketScreen() {
         ctx.fillStyle = btnTextColor;
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(btnLabel, cx2 + cardW/2, btnY + 22);
+        ctx.fillText(btnLabel, cx2 + cardW/2, btnY + 20);
 
         marketButtons.push({ x: cx2, y: cardY, w: cardW, h: cardH, action: 'card' + i });
     }
 
+    // Compute total rows for VOLVER placement
+    const totalRows = Math.ceil(numSkins / perRow);
+    const lastRowBottom = row0Y + totalRows * rowGap - 18 + 18;
+
     // VOLVER button
     const volverW = 160, volverH = 42;
     const volverX = canvas.width/2 - volverW/2;
-    const volverY = cardY + cardH + 20;
+    const volverY = lastRowBottom + 14;
     ctx.fillStyle = '#444';
     ctx.strokeStyle = '#aaa';
     ctx.lineWidth = 2;
