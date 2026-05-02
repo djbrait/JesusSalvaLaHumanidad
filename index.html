@@ -406,7 +406,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '1.8';
+const GAME_VERSION = '1.9';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -6360,7 +6360,7 @@ function updateBoss() {
                 // Hit detection — fist slammed at player's locked X
                 if (!player.dead && !isChicoInvisibleAndHidden() &&
                     Math.abs(playerCX - boss.fistWorldX) < 68 && player.y + player.h > 420) {
-                    damagePlayer(boss.phase2Active ? 3 : 2);
+                    damagePlayer(1);
                 }
             }
         } else if (boss.armState === 'retracting') {
