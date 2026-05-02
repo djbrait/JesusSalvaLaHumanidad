@@ -550,28 +550,27 @@ function updCamera() {
 var _tu=false,_td=false,_te=false;
 function updTitle() {
     fc++;
-    if (isDown('ArrowUp')&&!_tu){_tu=true;titleSel=(titleSel-1+2)%2;}
+    if (isDown('ArrowUp')&&!_tu){_tu=true;titleSel=(titleSel-1+3)%3;}
     if (!isDown('ArrowUp')) _tu=false;
-    if (isDown('ArrowDown')&&!_td){_td=true;titleSel=(titleSel+1)%2;}
+    if (isDown('ArrowDown')&&!_td){_td=true;titleSel=(titleSel+1)%3;}
     if (!isDown('ArrowDown')) _td=false;
     if ((isDown('Space')||isDown('Enter')||isDown('KeyZ'))&&!_te) {
         _te=true; ensureAudio();
         if (titleSel===0) {
-            storyLines=['En el año 2025, una oscuridad sin precedentes','se extendió por todo el mundo.',
-                'Miles de personas inocentes fueron poseídas','por espíritus del Infierno.',
-                'Solo uno puede salvarlos...','Con agua bendita y fe inquebrantable,',
-                'JESÚS camina entre los hombres.','¡Liberá las almas perdidas y derrotá al Diablo!'];
-            storyIdx=0; storyTimer=0; gameState='story';
+            fadeOut(function(){ resetGame(false); });
+        } else if (titleSel===1) {
+            gameState='story';
         } else { gameState='settings'; settSel=0; }
     }
     if (!isDown('Space')&&!isDown('Enter')&&!isDown('KeyZ')) _te=false;
 }
-var _se=false;
+var _se=false, _storyFromTitle=false;
 function updStory() {
     storyTimer++;
     if (storyTimer>25&&(isDown('Space')||isDown('Enter')||isDown('KeyZ'))&&!_se) {
-        _se=true; storyIdx++; storyTimer=0;
-        if (storyIdx>=storyLines.length) resetGame(true);
+        _se=true; storyTimer=0;
+        if (_storyFromTitle) { gameState='title'; _storyFromTitle=false; }
+        else { gameState='title'; }
     }
     if (!isDown('Space')&&!isDown('Enter')&&!isDown('KeyZ')) _se=false;
 }
@@ -1046,7 +1045,7 @@ function drawHUD() {
     ctx.fillStyle='#fff'; ctx.font='11px monospace'; ctx.fillText('fe',14,68);
     if (player.faith>=30) { ctx.fillStyle='rgba(255,215,0,0.85)'; ctx.fillText('[X] escudo',14,92); }
     var hpct=Math.max(0,Math.min(1,(camera.x-HELL_X+200)/300));
-    if (hpct>0.05&&!boss.active) {
+    if (hpct>0.05&&!(boss&&boss.active)) {
         ctx.globalAlpha=hpct*0.85; ctx.fillStyle='#ff2200';
         ctx.font='bold 14px monospace'; ctx.textAlign='center'; ctx.fillText('! EL INFIERNO ESTA CERCA !',480,22); ctx.globalAlpha=1;
     }
@@ -1061,7 +1060,7 @@ function drawHUD() {
     ctx.textAlign='left';
 }
 function drawBossHUD() {
-    if (!boss.active) return;
+    if (!boss||!boss.active) return;
     ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(220,8,520,36);
     ctx.fillStyle='#cc0000'; ctx.fillRect(226,15,507*(boss.hp/boss.maxHp),22);
     ctx.strokeStyle='#ff4444'; ctx.strokeRect(226,15,507,22);
@@ -1097,7 +1096,7 @@ function drawTitle() {
     ctx.fillText('El poder del amor y del agua bendita',480,118);
     var opts=['JUGAR','HISTORIA','AJUSTES'];
     for (var oi=0;oi<opts.length;oi++) {
-        var oy=230+oi*68, sel=(oi===menuSel);
+        var oy=230+oi*68, sel=(oi===titleSel);
         if (sel) {
             ctx.fillStyle='rgba(255,215,0,0.22)'; ctx.fillRect(330,oy-30,300,46);
             ctx.strokeStyle='#FFD700'; ctx.lineWidth=2; ctx.strokeRect(330,oy-30,300,46);
@@ -1229,7 +1228,7 @@ function draw() {
     drawHealth();
     drawCheckpoints();
     for (var ei=0;ei<enemies.length;ei++) drawPossessed(enemies[ei]);
-    if (boss.active||boss.defeated||boss.transforming) drawDevil(boss);
+    if (boss&&(boss.active||boss.defeated||boss.transforming)) drawDevil(boss);
     drawWater();
     drawFireballs();
     drawParticles();
