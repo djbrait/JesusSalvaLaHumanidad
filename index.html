@@ -1262,15 +1262,15 @@ function drawTitle() {
     var opts=['JUGAR','HISTORIA','AJUSTES'];
     for (var oi=0;oi<opts.length;oi++) {
         var oy=230+oi*68, sel=(oi===titleSel);
-        if (sel) {
-            ctx.fillStyle='rgba(255,215,0,0.22)'; ctx.fillRect(330,oy-30,300,46);
-            ctx.strokeStyle='#FFD700'; ctx.lineWidth=2; ctx.strokeRect(330,oy-30,300,46);
-        }
-        ctx.fillStyle=sel?'#FFD700':'#cce0ff'; ctx.font=(sel?'bold 28px':'24px')+' serif';
-        ctx.fillText((sel?'> ':'')+opts[oi]+(sel?' <':''),480,oy);
+        // fondo tocable mas grande para mobile
+        ctx.fillStyle=sel?'rgba(255,215,0,0.22)':'rgba(255,255,255,0.04)';
+        ctx.fillRect(280,oy-36,400,58);
+        if (sel) { ctx.strokeStyle='#FFD700'; ctx.lineWidth=2; ctx.strokeRect(280,oy-36,400,58); }
+        ctx.fillStyle=sel?'#FFD700':'#cce0ff'; ctx.font=(sel?'bold 30px':'26px')+' serif';
+        ctx.fillText((sel?'▶ ':'')+opts[oi]+(sel?' ◀':''),480,oy);
     }
     ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font='13px monospace';
-    ctx.fillText('[ARRIBA/ABAJO] seleccionar  [ENTER] confirmar',480,518);
+    ctx.fillText(isMob?'TOCA una opcion para seleccionar':'[ARRIBA/ABAJO] seleccionar  [ENTER] confirmar',480,518);
     ctx.textAlign='left';
 }
 function drawStory() {
@@ -1457,7 +1457,65 @@ function resizeCanvas() {
     pEl.style.bottom=''; pEl.style.left='';
 }
 window.addEventListener('resize',resizeCanvas);
+window.addEventListener('load', function(){ setTimeout(resizeCanvas, 200); });
 resizeCanvas();
+
+// ---- CANVAS TOUCH PARA MENUS ----
+function canvasTouchToGame(clientX, clientY) {
+    var r=canvas.getBoundingClientRect();
+    return {x:(clientX-r.left)*(960/r.width), y:(clientY-r.top)*(540/r.height)};
+}
+canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault(); ensureAudio();
+    var t=e.touches[0];
+    var p=canvasTouchToGame(t.clientX, t.clientY);
+    handleMenuTouch(p.x, p.y);
+}, {passive:false});
+canvas.addEventListener('click', function(e) {
+    var p=canvasTouchToGame(e.clientX, e.clientY);
+    handleMenuTouch(p.x, p.y);
+});
+function handleMenuTouch(cx, cy) {
+    if (gameState==='title') {
+        // Opciones en y=230,298,366 (alto ~46px cada una)
+        var opts=[230,298,366];
+        for (var i=0;i<opts.length;i++) {
+            if (cy>=opts[i]-32&&cy<=opts[i]+18&&cx>=280&&cx<=680) {
+                titleSel=i; _te=false;
+                touchKeys['Enter']=true;
+                setTimeout(function(){touchKeys['Enter']=false;},180);
+                return;
+            }
+        }
+        // tap fuera de opciones: confirmar seleccion actual
+        touchKeys['Space']=true;
+        setTimeout(function(){touchKeys['Space']=false;},180);
+    } else if (gameState==='story'||gameState==='gameOver'||gameState==='victory') {
+        touchKeys['Space']=true;
+        setTimeout(function(){touchKeys['Space']=false;},180);
+    } else if (gameState==='paused') {
+        var popts=[215,280,345];
+        for (var j=0;j<popts.length;j++) {
+            if (cy>=popts[j]-28&&cy<=popts[j]+18&&cx>=280&&cx<=680) {
+                pauseSel=j; _pen=false;
+                touchKeys['Enter']=true;
+                setTimeout(function(){touchKeys['Enter']=false;},180);
+                return;
+            }
+        }
+    } else if (gameState==='settings') {
+        var sopts=[200,270];
+        for (var k=0;k<sopts.length;k++) {
+            if (cy>=sopts[k]-28&&cy<=sopts[k]+18&&cx>=280&&cx<=680) {
+                settSel=k; _see=false;
+                touchKeys['Enter']=true;
+                setTimeout(function(){touchKeys['Enter']=false;},180);
+                return;
+            }
+        }
+        if (cy>380&&cy<420) { gameState='title'; }
+    }
+}
 
 // ---- ORIENTATION ----
 function checkOrientation() {
