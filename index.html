@@ -177,6 +177,10 @@ function sfxTeaCup() { playSound(800, 0.1, 'triangle', 0.08); setTimeout(() => p
 function sfxKnife() { playSound(1100, 0.1, 'sawtooth', 0.06); setTimeout(() => playSound(900, 0.08, 'sawtooth', 0.05), 30); }
 function sfxStretchArm() { playSound(200, 0.12, 'square', 0.1); setTimeout(() => playSound(350, 0.1, 'square', 0.08), 40); }
 function sfxPaper() { playSound(1200, 0.08, 'sine', 0.06); setTimeout(() => playSound(1000, 0.06, 'sine', 0.05), 30); }
+function sfxBoxingGlove() { playSound(180, 0.18, 'sawtooth', 0.12); setTimeout(() => playSound(250, 0.14, 'sawtooth', 0.1), 35); }
+function sfxKungFuStick() { playSound(600, 0.1, 'square', 0.08); setTimeout(() => playSound(900, 0.08, 'square', 0.06), 25); }
+function sfxScare() { playSound(200, 0.15, 'sine', 0.14); setTimeout(() => playSound(130, 0.12, 'sine', 0.1), 60); setTimeout(() => playSound(160, 0.1, 'sine', 0.08), 120); }
+function sfxPizzaThrow() { playSound(500, 0.1, 'square', 0.08); setTimeout(() => playSound(400, 0.08, 'square', 0.06), 40); }
 
 // ---- MUSIC ENGINE ----
 let musicPlaying = false;
@@ -406,7 +410,7 @@ document.getElementById('btn-pause')?.addEventListener('mousedown', (e) => { e.p
 function isKeyDown(code) { return keys[code] || touchKeys[code]; }
 
 // ---- VERSION ----
-const GAME_VERSION = '2.0';
+const GAME_VERSION = '2.1';
 
 // ---- GAME STATE ----
 let gameState = 'title'; // title, settings, story, playing, bossFight, levelComplete, gameOver, victory, paused, bonus, tutorial
@@ -429,9 +433,9 @@ let sfxEnabled = true;
 let totalCoins = parseInt(localStorage.getItem('chicoEstrella_totalCoins')) || 0;
 let sessionCoins = 0; // Coins earned this run — transferred to totalCoins when entering market
 let selectedSkin = parseInt(localStorage.getItem('chicoEstrella_selectedSkin')) || 0;
-let unlockedSkins = JSON.parse(localStorage.getItem('chicoEstrella_unlockedSkins')) || [true, false, false, false, false, false, false, false];
-// Ensure array has 8 entries for existing users
-while (unlockedSkins.length < 8) unlockedSkins.push(false);
+let unlockedSkins = JSON.parse(localStorage.getItem('chicoEstrella_unlockedSkins')) || [true, false, false, false, false, false, false, false, false, false];
+// Ensure array has 10 entries for existing users
+while (unlockedSkins.length < 10) unlockedSkins.push(false);
 let marketSelection = 0;
 let marketButtons = [];
 
@@ -579,7 +583,7 @@ const LEVEL_THEMES = [
     { name: 'El Espacio Final', color: '#0D0D2B', skyColor: '#0D0D2B', groundColor: '#8B0000', accentColor: '#FFD700', sky1: '#000010', sky2: '#0D0D2B', ground: '#8B0000', platform: '#4A0080', accent: '#FFD700' }
 ];
 
-const SKIN_NAMES = ['Chico Estrella', 'Chica Fugaz', 'Chico Luminoso', 'Chico Invisible', 'Magnate', 'Chico Goloso', 'Chico Imán', 'Chica Masa'];
+const SKIN_NAMES = ['Chico Estrella', 'Chica Fugaz', 'Chico Luminoso', 'Chico Invisible', 'Magnate', 'Chico Goloso', 'Chico Imán', 'Chica Masa', 'Chico Agilista', 'Fantascool'];
 
 const STORIES = [
     [
@@ -2679,6 +2683,296 @@ function drawChicaMasa(x, y, w, h, facing, animFrame, attacking, invincible, isE
     ctx.restore();
 }
 
+function drawChicoAgilista(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
+    if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
+    ctx.save();
+    ctx.translate(x + w/2, y + h/2);
+    if (facing < 0) ctx.scale(-1, 1);
+    const cx = -w/2, cy = -h/2;
+    const legStep = isRunning ? Math.sin(animFrame * 0.3) * 6 : Math.sin(animFrame * 0.15) * 3;
+
+    // Black boots
+    ctx.fillStyle = '#111';
+    ctx.fillRect(cx + w * 0.18, cy + h * 0.85 + legStep, w * 0.22, h * 0.15);
+    ctx.fillRect(cx + w * 0.58, cy + h * 0.85 - legStep, w * 0.22, h * 0.15);
+
+    // White pants
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.65 + legStep, w * 0.18, h * 0.22);
+    ctx.fillRect(cx + w * 0.6, cy + h * 0.65 - legStep, w * 0.18, h * 0.22);
+
+    // Body: white base
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(cx + w * 0.15, cy + h * 0.27, w * 0.7, h * 0.38);
+    // Body black diagonal half
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.15, cy + h * 0.27);
+    ctx.lineTo(cx + w * 0.75, cy + h * 0.27);
+    ctx.lineTo(cx + w * 0.32, cy + h * 0.65);
+    ctx.lineTo(cx + w * 0.15, cy + h * 0.65);
+    ctx.closePath();
+    ctx.fill();
+
+    // Belt
+    ctx.fillStyle = '#111';
+    ctx.fillRect(cx + w * 0.15, cy + h * 0.59, w * 0.7, h * 0.07);
+    ctx.fillStyle = '#aaa';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy + h * 0.625, w * 0.07, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#555';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy + h * 0.625, w * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Circular badge on white side
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.64, cy + h * 0.42, w * 0.07, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Circular badge on black side
+    ctx.fillStyle = '#e8e8e8';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.34, cy + h * 0.39, w * 0.07, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.34, cy + h * 0.39, w * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Left arm (black)
+    const armBob = Math.sin(animFrame * 0.15) * 2;
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(cx - w * 0.04, cy + h * 0.29 + armBob, w * 0.19, h * 0.26);
+    // Left hand (white fist)
+    ctx.fillStyle = '#ddd';
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.07, cy + h * 0.56 + armBob, w * 0.09, w * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Small tool in left hand
+    ctx.fillStyle = '#666';
+    ctx.fillRect(cx + w * 0.1, cy + h * 0.52 + armBob, w * 0.04, h * 0.1);
+
+    // Right arm (white)
+    ctx.fillStyle = '#e8e8e8';
+    ctx.fillRect(cx + w * 0.85, cy + h * 0.29 - armBob, w * 0.18, h * 0.25);
+    // Right fist (black glove)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.94, cy + h * 0.54 - armBob, w * 0.09, w * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // White oval head
+    ctx.fillStyle = '#e8e8e8';
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.5, cy + h * 0.15, w * 0.27, h * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ccc';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Black goggles/mask bar
+    ctx.fillStyle = '#111';
+    ctx.fillRect(cx + w * 0.19, cy + h * 0.09, w * 0.62, h * 0.09);
+    // Left pointer ◄
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.19, cy + h * 0.09);
+    ctx.lineTo(cx + w * 0.08, cy + h * 0.135);
+    ctx.lineTo(cx + w * 0.19, cy + h * 0.18);
+    ctx.closePath();
+    ctx.fill();
+    // Right pointer ►
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.81, cy + h * 0.09);
+    ctx.lineTo(cx + w * 0.92, cy + h * 0.135);
+    ctx.lineTo(cx + w * 0.81, cy + h * 0.18);
+    ctx.closePath();
+    ctx.fill();
+
+    // Left goggle lens (white with pupil)
+    ctx.fillStyle = '#e8e8e8';
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.37, cy + h * 0.135, w * 0.1, h * 0.04, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Right goggle lens
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.63, cy + h * 0.135, w * 0.1, h * 0.04, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.37, cy + h * 0.135, w * 0.05, h * 0.022, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.63, cy + h * 0.135, w * 0.05, h * 0.022, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Neutral tight-lipped expression
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.41, cy + h * 0.225);
+    ctx.lineTo(cx + w * 0.59, cy + h * 0.225);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawFantascool(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
+    if (invincible > 0 && Math.floor(invincible / 3) % 2 === 0) return;
+    ctx.save();
+    ctx.translate(x + w/2, y + h/2);
+    if (facing < 0) ctx.scale(-1, 1);
+    const cx = -w/2, cy = -h/2;
+    const legStep = isRunning ? Math.sin(animFrame * 0.3) * 6 : Math.sin(animFrame * 0.15) * 3;
+
+    // Black skates/boots
+    ctx.fillStyle = '#111';
+    ctx.fillRect(cx + w * 0.17, cy + h * 0.87 + legStep, w * 0.24, h * 0.13);
+    ctx.fillRect(cx + w * 0.57, cy + h * 0.87 - legStep, w * 0.24, h * 0.13);
+
+    // White pants
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.64 + legStep, w * 0.18, h * 0.25);
+    ctx.fillRect(cx + w * 0.6, cy + h * 0.64 - legStep, w * 0.18, h * 0.25);
+
+    // Green ankle bands
+    ctx.fillStyle = '#7FFF00';
+    ctx.fillRect(cx + w * 0.17, cy + h * 0.84 + legStep, w * 0.24, h * 0.04);
+    ctx.fillRect(cx + w * 0.57, cy + h * 0.84 - legStep, w * 0.24, h * 0.04);
+
+    // White body
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(cx + w * 0.22, cy + h * 0.35, w * 0.56, h * 0.3);
+
+    // Orange harness straps (X shape)
+    ctx.strokeStyle = '#FF6600';
+    ctx.lineWidth = w * 0.065;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.28, cy + h * 0.3);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.52);
+    ctx.lineTo(cx + w * 0.72, cy + h * 0.3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.5, cy + h * 0.52);
+    ctx.lineTo(cx + w * 0.5, cy + h * 0.65);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+
+    // Ghost medallion
+    ctx.fillStyle = '#ddd';
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy + h * 0.5, w * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(cx + w * 0.45, cy + h * 0.49, w * 0.025, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + w * 0.55, cy + h * 0.49, w * 0.025, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx + w * 0.5, cy + h * 0.535, w * 0.022, 0, Math.PI); ctx.fill();
+
+    // Green belt
+    ctx.fillStyle = '#7FFF00';
+    ctx.fillRect(cx + w * 0.2, cy + h * 0.6, w * 0.6, h * 0.05);
+
+    // Long left arm (spread out)
+    const armBob = Math.sin(animFrame * 0.12) * 3;
+    ctx.fillStyle = '#f0f0f0';
+    ctx.save();
+    ctx.translate(cx + w * 0.2, cy + h * 0.38 + armBob);
+    ctx.rotate(-0.35);
+    ctx.fillRect(-w * 0.07, 0, w * 0.13, h * 0.3);
+    ctx.fillStyle = '#7FFF00';
+    ctx.fillRect(-w * 0.07, h * 0.22, w * 0.13, h * 0.05);
+    ctx.fillStyle = '#f0f0f0';
+    ctx.beginPath();
+    ctx.ellipse(0, h * 0.33, w * 0.065, w * 0.065, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Long right arm
+    ctx.fillStyle = '#f0f0f0';
+    ctx.save();
+    ctx.translate(cx + w * 0.8, cy + h * 0.38 + armBob);
+    ctx.rotate(0.35);
+    ctx.fillRect(-w * 0.06, 0, w * 0.13, h * 0.3);
+    ctx.fillStyle = '#7FFF00';
+    ctx.fillRect(-w * 0.06, h * 0.22, w * 0.13, h * 0.05);
+    ctx.fillStyle = '#f0f0f0';
+    ctx.beginPath();
+    ctx.ellipse(0, h * 0.33, w * 0.065, w * 0.065, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Beige oval face
+    ctx.fillStyle = '#f5e6d0';
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.5, cy + h * 0.16, w * 0.27, h * 0.19, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Orange backwards cap
+    ctx.fillStyle = '#FF6600';
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.5, cy + h * 0.06, w * 0.28, h * 0.08, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(cx + w * 0.22, cy + h * 0.04, w * 0.56, h * 0.06);
+    // Bill pointing right (backwards cap)
+    ctx.fillStyle = '#CC4400';
+    ctx.fillRect(cx + w * 0.68, cy + h * 0.045, w * 0.2, h * 0.04);
+    // Green visor line
+    ctx.fillStyle = '#7FFF00';
+    ctx.fillRect(cx + w * 0.68, cy + h * 0.045, w * 0.2, h * 0.022);
+    // Green button on top
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy - h * 0.02, w * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Black sunglasses
+    ctx.fillStyle = '#111';
+    ctx.fillRect(cx + w * 0.25, cy + h * 0.11, w * 0.5, h * 0.07);
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.37, cy + h * 0.145, w * 0.1, h * 0.04, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.63, cy + h * 0.145, w * 0.1, h * 0.04, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Glass reflections
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.34, cy + h * 0.138, w * 0.05, h * 0.02, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + w * 0.60, cy + h * 0.138, w * 0.05, h * 0.02, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nose (small triangle/bump)
+    ctx.fillStyle = '#d4a076';
+    ctx.beginPath();
+    ctx.moveTo(cx + w * 0.5, cy + h * 0.2);
+    ctx.lineTo(cx + w * 0.44, cy + h * 0.245);
+    ctx.lineTo(cx + w * 0.56, cy + h * 0.245);
+    ctx.closePath();
+    ctx.fill();
+
+    // Big smile
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx + w * 0.5, cy + h * 0.225, w * 0.13, 0.25, Math.PI - 0.25);
+    ctx.stroke();
+    // Teeth
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx + w * 0.41, cy + h * 0.255, w * 0.18, h * 0.028);
+
+    ctx.restore();
+}
+
 function drawPlayerCharacter(x, y, w, h, facing, animFrame, attacking, invincible, isEvil = false, isRunning = false) {
     if (selectedSkin === 1 && unlockedSkins[1]) {
         drawChicaFugaz(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
@@ -2694,6 +2988,10 @@ function drawPlayerCharacter(x, y, w, h, facing, animFrame, attacking, invincibl
         drawChicoIman(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     } else if (selectedSkin === 7 && unlockedSkins[7]) {
         drawChicaMasa(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
+    } else if (selectedSkin === 8 && unlockedSkins[8]) {
+        drawChicoAgilista(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
+    } else if (selectedSkin === 9 && unlockedSkins[9]) {
+        drawFantascool(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     } else {
         drawChicoEstrella(x, y, w, h, facing, animFrame, attacking, invincible, isEvil, isRunning);
     }
@@ -5493,6 +5791,44 @@ function updatePlayer() {
                 damage: isGiant ? 4 : 3,
                 w: isGiant ? 28 : 18, h: isGiant ? 14 : 8
             });
+        } else if (selectedSkin === 8 && unlockedSkins[8]) {
+            // Chico Agilista Z: guantes rojos de boxeo al enemigo más cercano
+            player.attacking = true;
+            player.attackTimer = 15;
+            player.attackCooldown = 8;
+            sfxBoxingGlove();
+            const isGiant = player.giantTimer > 0;
+            const aim = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim.dx >= 0 ? player.w + 2 : -18),
+                y: player.y + player.h * 0.3,
+                vx: aim.dx * 9,
+                vy: aim.dy * 9,
+                type: 'boxingGlove',
+                life: 50,
+                damage: isGiant ? 3 : 2,
+                w: isGiant ? 26 : 18, h: isGiant ? 26 : 18,
+                rotation: 0
+            });
+        } else if (selectedSkin === 9 && unlockedSkins[9]) {
+            // Fantascool Z: susto/ghost al enemigo más cercano
+            player.attacking = true;
+            player.attackTimer = 15;
+            player.attackCooldown = 9;
+            sfxScare();
+            const isGiant = player.giantTimer > 0;
+            const aim = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim.dx >= 0 ? player.w + 2 : -20),
+                y: player.y + player.h * 0.15,
+                vx: aim.dx * 7,
+                vy: aim.dy * 7,
+                type: 'scare',
+                life: 55,
+                damage: isGiant ? 3 : 2,
+                w: isGiant ? 28 : 20, h: isGiant ? 28 : 20,
+                rotation: 0
+            });
         } else {
             player.attacking = true;
             player.attackTimer = 15;
@@ -5611,6 +5947,44 @@ function updatePlayer() {
                 rotation: 0
             });
         }
+    } else if (selectedSkin === 8 && unlockedSkins[8]) {
+        // Chico Agilista X: palo de kung fu al enemigo más cercano
+        if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.attackCooldown === 0) {
+            player.attackCooldown = 8;
+            sfxKungFuStick();
+            const isGiant2 = player.giantTimer > 0;
+            const aim2 = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim2.dx >= 0 ? player.w + 2 : -22),
+                y: player.y + player.h * 0.25,
+                vx: aim2.dx * 11,
+                vy: aim2.dy * 11,
+                type: 'kungFuStick',
+                life: 50,
+                damage: isGiant2 ? 3 : 2,
+                w: isGiant2 ? 32 : 22, h: isGiant2 ? 10 : 6,
+                rotation: 0
+            });
+        }
+    } else if (selectedSkin === 9 && unlockedSkins[9]) {
+        // Fantascool X: pizza al enemigo más cercano
+        if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.attackCooldown === 0) {
+            player.attackCooldown = 9;
+            sfxPizzaThrow();
+            const isGiant2 = player.giantTimer > 0;
+            const aim2 = findNearestTarget();
+            playerProjectiles.push({
+                x: player.x + (aim2.dx >= 0 ? player.w + 2 : -22),
+                y: player.y + player.h * 0.25,
+                vx: aim2.dx * 8,
+                vy: aim2.dy * 8,
+                type: 'pizza',
+                life: 55,
+                damage: isGiant2 ? 3 : 2,
+                w: isGiant2 ? 28 : 20, h: isGiant2 ? 28 : 20,
+                rotation: 0
+            });
+        }
     } else if ((isKeyDown('KeyX') || isKeyDown('KeyK')) && player.attackCooldown === 0) {
         player.attackCooldown = 6;
         sfxNinjaStar();
@@ -5695,7 +6069,7 @@ function updateEnemies() {
                 e.alive = false;
                 score += 100;
                 sfxBossHit();
-                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : p.type === 'cookie' ? '#D2691E' : p.type === 'sodaLiquid' ? '#7CFC00' : p.type === 'teaCup' ? '#C0C0C0' : p.type === 'knife' ? '#C0C0C0' : p.type === 'stretchArm' ? '#FF0000' : p.type === 'paperSheet' ? '#f5f5f5' : '#FFD700', 8);
+                spawnParticles(e.x + e.w/2, e.y + e.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : p.type === 'cookie' ? '#D2691E' : p.type === 'sodaLiquid' ? '#7CFC00' : p.type === 'teaCup' ? '#C0C0C0' : p.type === 'knife' ? '#C0C0C0' : p.type === 'stretchArm' ? '#FF0000' : p.type === 'paperSheet' ? '#f5f5f5' : p.type === 'boxingGlove' ? '#CC0000' : p.type === 'kungFuStick' ? '#8B4513' : p.type === 'scare' ? '#aabbff' : p.type === 'pizza' ? '#FFD700' : '#FFD700', 8);
                 player.starPower = Math.min(player.maxStarPower, player.starPower + 10);
                 spawnDrop(e.x + e.w/2, e.y + e.h/2);
                 addCombo();
@@ -6407,7 +6781,7 @@ function updateBoss() {
             sfxBossHit();
             shakeTimer = 5;
             shakeIntensity = 3;
-            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : p.type === 'cookie' ? '#D2691E' : p.type === 'sodaLiquid' ? '#7CFC00' : p.type === 'teaCup' ? '#C0C0C0' : p.type === 'knife' ? '#C0C0C0' : p.type === 'stretchArm' ? '#FF0000' : p.type === 'paperSheet' ? '#f5f5f5' : '#FFD700', 6);
+            spawnParticles(boss.x + boss.w/2, boss.y + boss.h/2, p.type === 'laser' ? '#00ff00' : p.type === 'hammer' ? '#888' : p.type === 'fireRay' ? '#FF4500' : p.type === 'iceRay' ? '#00BFFF' : p.type === 'cookie' ? '#D2691E' : p.type === 'sodaLiquid' ? '#7CFC00' : p.type === 'teaCup' ? '#C0C0C0' : p.type === 'knife' ? '#C0C0C0' : p.type === 'stretchArm' ? '#FF0000' : p.type === 'paperSheet' ? '#f5f5f5' : p.type === 'boxingGlove' ? '#CC0000' : p.type === 'kungFuStick' ? '#8B4513' : p.type === 'scare' ? '#aabbff' : p.type === 'pizza' ? '#FFD700' : '#FFD700', 6);
             score += 50;
             screenFlash = { timer: 4, color: '#FFD700' };
             playerProjectiles.splice(pi, 1);
@@ -6495,6 +6869,12 @@ function updatePlayerProjectiles() {
         }
         if (p.type === 'knife' || p.type === 'paperSheet') {
             p.rotation = (p.rotation || 0) + 0.35;
+        }
+        if (p.type === 'boxingGlove' || p.type === 'scare' || p.type === 'pizza') {
+            p.rotation = (p.rotation || 0) + 0.18;
+        }
+        if (p.type === 'kungFuStick') {
+            p.rotation = (p.rotation || 0) + 0.28;
         }
         p.life--;
         if (p.life <= 0 || p.x < camera.x - 50 || p.x > camera.x + canvas.width + 50 || p.y > 550) {
@@ -6692,6 +7072,133 @@ function drawPlayerProjectiles() {
             ctx.fillStyle = '#ccc';
             ctx.fillRect(p.w/2 - 1, -p.h/2, 1, p.h);
             ctx.restore();
+        } else if (p.type === 'boxingGlove') {
+            // Red boxing glove
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            const r = p.w / 2;
+            // Main glove body (red)
+            ctx.fillStyle = '#CC0000';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, r, r * 0.85, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Thumb nub
+            ctx.fillStyle = '#AA0000';
+            ctx.beginPath();
+            ctx.ellipse(r * 0.55, -r * 0.45, r * 0.28, r * 0.22, -0.5, 0, Math.PI * 2);
+            ctx.fill();
+            // Wrist band (white)
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-r * 0.7, r * 0.5, r * 1.4, r * 0.35);
+            // Lace line
+            ctx.strokeStyle = '#AA0000';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, -r * 0.3); ctx.lineTo(0, r * 0.5);
+            ctx.stroke();
+            // Shine
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.beginPath();
+            ctx.ellipse(-r * 0.2, -r * 0.25, r * 0.2, r * 0.12, -0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        } else if (p.type === 'kungFuStick') {
+            // Wooden kung fu training stick
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            // Stick body (dark brown)
+            ctx.fillStyle = '#5C3317';
+            ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+            // Wood grain highlights
+            ctx.fillStyle = '#7B4D2A';
+            ctx.fillRect(-p.w/2, -p.h/4, p.w, p.h * 0.25);
+            ctx.fillStyle = '#4A2810';
+            ctx.fillRect(-p.w/2, p.h/4, p.w, p.h * 0.12);
+            // Grip tape wrap (black bands)
+            ctx.fillStyle = '#111';
+            for (let gi = 0; gi < 3; gi++) {
+                ctx.fillRect(-p.w/2 + p.w * (0.18 + gi * 0.22), -p.h/2 - 1, p.w * 0.07, p.h + 2);
+            }
+            // Tips
+            ctx.fillStyle = '#222';
+            ctx.fillRect(-p.w/2, -p.h/2, p.w * 0.06, p.h);
+            ctx.fillRect(p.w/2 - p.w * 0.06, -p.h/2, p.w * 0.06, p.h);
+            ctx.restore();
+        } else if (p.type === 'scare') {
+            // Ghost scare — white/blue floating ghost face
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(Math.sin(p.rotation * 2) * 0.25); // gentle wobble
+            const r2 = p.w / 2;
+            // Ghost body
+            ctx.fillStyle = 'rgba(220,230,255,0.92)';
+            ctx.beginPath();
+            ctx.arc(0, -r2 * 0.2, r2, Math.PI, 0);
+            ctx.lineTo(r2, r2 * 0.6);
+            // Wavy bottom
+            for (let wi = 4; wi >= 0; wi--) {
+                const wx = r2 - wi * r2 * 0.5;
+                ctx.quadraticCurveTo(r2 - (wi + 0.5) * r2 * 0.5, r2 * (wi % 2 === 0 ? 0.85 : 0.45), r2 - wi * r2 * 0.5 - r2 * 0.25, r2 * 0.65);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#99aaff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            // Eyes (scared/scary O's)
+            ctx.fillStyle = '#111';
+            ctx.beginPath(); ctx.ellipse(-r2*0.3, -r2*0.2, r2*0.17, r2*0.2, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(r2*0.3, -r2*0.2, r2*0.17, r2*0.2, 0, 0, Math.PI*2); ctx.fill();
+            // Mouth (jagged O)
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, r2*0.25, r2*0.25, 0.3, Math.PI - 0.3);
+            ctx.stroke();
+            ctx.restore();
+        } else if (p.type === 'pizza') {
+            // Pizza slice (triangle + toppings)
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            const pr = p.w / 2;
+            // Crust base (tan/light brown arc)
+            ctx.fillStyle = '#D2691E';
+            ctx.beginPath();
+            ctx.arc(0, 0, pr, -Math.PI * 0.75, -Math.PI * 0.25);
+            ctx.lineTo(0, pr * 0.2);
+            ctx.closePath();
+            ctx.fill();
+            // Sauce (red triangle)
+            ctx.fillStyle = '#CC2200';
+            ctx.beginPath();
+            ctx.moveTo(-pr * 0.65, -pr * 0.65);
+            ctx.lineTo(pr * 0.65, -pr * 0.65);
+            ctx.lineTo(0, pr * 0.15);
+            ctx.closePath();
+            ctx.fill();
+            // Cheese (yellow fill)
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(-pr * 0.5, -pr * 0.58);
+            ctx.lineTo(pr * 0.5, -pr * 0.58);
+            ctx.lineTo(0, pr * 0.05);
+            ctx.closePath();
+            ctx.fill();
+            // Pepperoni spots (dark red circles)
+            ctx.fillStyle = '#8B0000';
+            ctx.beginPath(); ctx.arc(-pr*0.22, -pr*0.45, pr*0.12, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(pr*0.22, -pr*0.45, pr*0.12, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, -pr*0.28, pr*0.1, 0, Math.PI*2); ctx.fill();
+            // Crust outline
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, pr, -Math.PI * 0.75, -Math.PI * 0.25);
+            ctx.stroke();
+            ctx.restore();
         }
     }
 }
@@ -6784,6 +7291,8 @@ function startTutorial() {
                 case 5: return 'Z\n   Lanzar COOKIES al enemigo\n   ¡Al más cercano!';
                 case 6: return 'Z\n   Lanzar TAZA DE TÉ de metal\n   ¡Al enemigo más cercano!';
                 case 7: return 'Z\n   BRAZO ELÁSTICO al enemigo\n   ¡Puñetazo directo!';
+                case 8: return 'Z\n   GUANTE DE BOXEO al enemigo\n   ¡Golpe rojo continuo!';
+                case 9: return 'Z\n   SUSTO al enemigo más cercano\n   ¡Lanzá el fantasma!';
                 default: return 'Z\n   Lanzar rayo verde por los ojos\n   ¡Apuntá al frente!';
             }
         })(), icon: 'Z' },
@@ -6794,6 +7303,8 @@ function startTutorial() {
                 case 5: return 'X\n   Lanzar LÍQUIDO CON GAS (soda)\n   ¡Al enemigo más cercano!';
                 case 6: return 'X\n   Lanzar CUCHILLOS al enemigo\n   ¡Afilados y letales!';
                 case 7: return 'X\n   Lanzar HOJAS DE PAPEL con filo\n   ¡Cortantes y rápidas!';
+                case 8: return 'X\n   PALO DE KUNG FU al enemigo\n   ¡Veloz y directo!';
+                case 9: return 'X\n   PIZZA al enemigo más cercano\n   ¡Girando en el aire!';
                 default: return 'X\n   Lanzar estrellas ninja\n   ¡Giratorias y poderosas!';
             }
         })(), icon: 'X' },
@@ -6984,6 +7495,57 @@ function drawTutorial() {
             ctx.rotate(p.rotation);
             ctx.fillStyle = '#f5f5f5';
             ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+            ctx.restore();
+        } else if (p.type === 'boxingGlove') {
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            const r = p.w / 2;
+            ctx.fillStyle = '#CC0000';
+            ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(-r * 0.7, r * 0.45, r * 1.4, r * 0.35);
+            ctx.restore();
+        } else if (p.type === 'kungFuStick') {
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            ctx.fillStyle = '#5C3317';
+            ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+            ctx.fillStyle = '#7B4D2A';
+            ctx.fillRect(-p.w/2, -p.h/6, p.w, p.h * 0.25);
+            ctx.restore();
+        } else if (p.type === 'scare') {
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            const r2 = p.w / 2;
+            ctx.fillStyle = 'rgba(220,230,255,0.88)';
+            ctx.beginPath();
+            ctx.arc(0, -r2 * 0.2, r2, Math.PI, 0);
+            ctx.lineTo(r2, r2 * 0.6); ctx.lineTo(-r2, r2 * 0.6); ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#111';
+            ctx.beginPath(); ctx.ellipse(-r2*0.3, -r2*0.2, r2*0.15, r2*0.18, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(r2*0.3, -r2*0.2, r2*0.15, r2*0.18, 0, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        } else if (p.type === 'pizza') {
+            ctx.save();
+            ctx.translate(sx + p.w/2, p.y + p.h/2);
+            ctx.rotate(p.rotation);
+            const pr = p.w / 2;
+            ctx.fillStyle = '#D2691E';
+            ctx.beginPath();
+            ctx.arc(0, 0, pr, -Math.PI * 0.75, -Math.PI * 0.25);
+            ctx.lineTo(0, pr * 0.2); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#CC2200';
+            ctx.beginPath();
+            ctx.moveTo(-pr*0.65, -pr*0.65); ctx.lineTo(pr*0.65, -pr*0.65); ctx.lineTo(0, pr*0.1); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.moveTo(-pr*0.45, -pr*0.55); ctx.lineTo(pr*0.45, -pr*0.55); ctx.lineTo(0, pr*0.05); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#8B0000';
+            ctx.beginPath(); ctx.arc(-pr*0.2, -pr*0.42, pr*0.1, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(pr*0.2, -pr*0.42, pr*0.1, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
     }
@@ -7246,7 +7808,7 @@ function draw() {
 }
 
 function handleMarketAction() {
-    const skinPrices = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000];
+    const skinPrices = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000, 5000, 5000];
     const i = marketSelection;
     if (i >= SKIN_NAMES.length) return;
     if (unlockedSkins[i]) {
@@ -7263,11 +7825,11 @@ function handleMarketAction() {
 function updateMarket() {
     if (keys['ArrowLeft']) {
         keys['ArrowLeft'] = false;
-        marketSelection = (marketSelection + 7) % 8;
+        marketSelection = (marketSelection + 9) % 10;
     }
     if (keys['ArrowRight']) {
         keys['ArrowRight'] = false;
-        marketSelection = (marketSelection + 1) % 8;
+        marketSelection = (marketSelection + 1) % 10;
     }
     if (keys['Enter']) {
         keys['Enter'] = false;
@@ -7282,8 +7844,8 @@ function updateMarket() {
 function drawMarketScreen() {
     const t = Date.now() / 1000;
     const skinNames = SKIN_NAMES;
-    const skinPrices = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000];
-    const skinDrawFns = [drawChicoEstrella, drawChicaFugaz, drawChicoLuminoso, drawChicoInvisible, drawMagnate, drawChicoGoloso, drawChicoIman, drawChicaMasa];
+    const skinPrices = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000, 5000, 5000];
+    const skinDrawFns = [drawChicoEstrella, drawChicaFugaz, drawChicoLuminoso, drawChicoInvisible, drawMagnate, drawChicoGoloso, drawChicoIman, drawChicaMasa, drawChicoAgilista, drawFantascool];
 
     // Background - supermarket theme
     const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
@@ -7332,7 +7894,7 @@ function drawMarketScreen() {
     ctx.fillText('⭐ ' + totalCoins, canvas.width - 25, 40);
 
     // Character cards
-    const numSkins = 8;
+    const numSkins = 10;
     const cardW = 100, cardH = 300;
     const gap = 12;
     const totalW = cardW * numSkins + gap * (numSkins - 1);
