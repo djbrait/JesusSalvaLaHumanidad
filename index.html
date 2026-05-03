@@ -56,13 +56,13 @@
 </div>
 <script>
 // ============================================================
-// JESUS SALVA A LA HUMANIDAD - v1.3
+// JESUS SALVA A LA HUMANIDAD - v1.7
 // Plataformas 2D - Liberá almas poseídas con agua bendita
 // ============================================================
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 canvas.width = 960; canvas.height = 540;
-const GAME_VERSION = 'v1.3';
+const GAME_VERSION = 'v1.7';
 
 // ---- AUDIO ----
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -661,7 +661,7 @@ function updPause() {
         _pen=true;
         if (pauseSel===0) togglePause();
         else if (pauseSel===1) resetGame();
-        else { gameState='title'; stopMusic(); }
+        else { gameState='title'; stopMusic(); _te=true; }
     }
     if (!isDown('Space')&&!isDown('Enter')&&!isDown('KeyZ')) _pen=false;
     if (isDown('Escape')) togglePause();

@@ -418,6 +418,7 @@ firebase deploy
 | v1.4 | Fix: version display visibility on all screens, pause menu 'Menu Principal' logic. |
 | v1.5 | Fix: cache issues (bumped sw.js to v4). Improved version visibility. |
 | v1.6 | Fix: version display bottom-right (no overlap), title screen visibility. Fix: pause menu redirect bug. Bumped sw.js to v5. |
+| v1.7 | Full cleanup of index.html. Fix: version display bottom-left (zero overlap). Fix: pause menu redirect (input flag reset). Bumped sw.js to v6. |
 
 ---
 
