@@ -4,7 +4,14 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Proyectos\\\\JuegoJesusSaveTheHumanity\" -Force)",
       "Bash(Select-Object Name, BaseName)",
       "Bash(Sort-Object Name)",
-      "PowerShell(ls *)"
+      "PowerShell(ls *)",
+      "Skill(update-config)",
+      "Bash(npx firebase *)",
+      "Bash(npm install *)",
+      "Bash(firebase deploy *)",
+      "Bash(firebase login *)",
+      "Bash(node generate-icons.js)",
+      "Bash(node test.js)"
     ]
   }
 }
