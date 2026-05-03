@@ -416,6 +416,7 @@ firebase deploy
 | v1.2 | Fix: enemies invisible (var global faltante), Jesus invisible, escenario Nazaret, ajustes funcional |
 | v1.3 | Fix: rendering (fadeAlpha typo). New: top-right version display. |
 | v1.4 | Fix: version display visibility on all screens, pause menu 'Menu Principal' logic. |
+| v1.5 | Fix: cache issues (bumped sw.js to v4). Improved version visibility. |
 
 ---
 
