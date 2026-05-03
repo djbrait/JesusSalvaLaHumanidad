@@ -417,6 +417,7 @@ firebase deploy
 | v1.3 | Fix: rendering (fadeAlpha typo). New: top-right version display. |
 | v1.4 | Fix: version display visibility on all screens, pause menu 'Menu Principal' logic. |
 | v1.5 | Fix: cache issues (bumped sw.js to v4). Improved version visibility. |
+| v1.6 | Fix: version display bottom-right (no overlap), title screen visibility. Fix: pause menu redirect bug. Bumped sw.js to v5. |
 
 ---
 

@@ -1398,26 +1398,28 @@ function drawVersion() {
 function draw() {
     ctx.clearRect(0,0,960,540);
     var st=gameState;
-    if (st==='title') { drawTitle(); return; }
-    if (st==='story') { drawStory(); return; }
-    if (st==='settings') { drawSettings(); return; }
-    if (st==='gameOver') { drawGameOver(); return; }
-    if (st==='victory') { drawVictory(); return; }
-    drawBg();
-    drawPlatforms();
-    drawCoins();
-    drawHealth();
-    drawCheckpoints();
-    for (var ei=0;ei<level.enemies.length;ei++) drawPossessed(level.enemies[ei]);
-    if (boss) drawDevil(boss);
-    drawWater();
-    drawFireballs();
-    drawParticles();
-    drawJesus(player.x-camera.x+player.w/2,player.y,player.facing,player.animTimer,player.attackTimer,player.invincible,0,player.faith,player.onGround,player.crouching);
-    drawBlessingWaves();
-    if (st==='paused') drawPause();
-    if (st==='playing'||st==='bossFight'||st==='paused') { drawHUD(); drawBossHUD(); }
-    if (transAlpha>0) { ctx.fillStyle='rgba(0,0,0,'+transAlpha+')'; ctx.fillRect(0,0,960,540); }
+    if (st==='title') drawTitle();
+    else if (st==='story') drawStory();
+    else if (st==='settings') drawSettings();
+    else if (st==='gameOver') drawGameOver();
+    else if (st==='victory') drawVictory();
+    else {
+        drawBg();
+        drawPlatforms();
+        drawCoins();
+        drawHealth();
+        drawCheckpoints();
+        for (var ei=0;ei<level.enemies.length;ei++) drawPossessed(level.enemies[ei]);
+        if (boss) drawDevil(boss);
+        drawWater();
+        drawFireballs();
+        drawParticles();
+        drawJesus(player.x-camera.x+player.w/2,player.y,player.facing,player.animTimer,player.attackTimer,player.invincible,0,player.faith,player.onGround,player.crouching);
+        drawBlessingWaves();
+        if (st==='paused') drawPause();
+        if (st==='playing'||st==='bossFight'||st==='paused') { drawHUD(); drawBossHUD(); }
+        if (transAlpha>0) { ctx.fillStyle='rgba(0,0,0,'+transAlpha+')'; ctx.fillRect(0,0,960,540); }
+    }
     drawVersion();
 }
 
