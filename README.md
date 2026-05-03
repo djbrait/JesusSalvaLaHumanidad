@@ -415,6 +415,7 @@ firebase deploy
 | v1.1 | Fix: bugs título (menuSel, titleSel %3, boss null crash) |
 | v1.2 | Fix: enemies invisible (var global faltante), Jesus invisible, escenario Nazaret, ajustes funcional |
 | v1.3 | Fix: rendering (fadeAlpha typo). New: top-right version display. |
+| v1.4 | Fix: version display visibility on all screens, pause menu 'Menu Principal' logic. |
 
 ---
 

@@ -660,8 +660,8 @@ function updPause() {
     if ((isDown('Space')||isDown('Enter')||isDown('KeyZ'))&&!_pen) {
         _pen=true;
         if (pauseSel===0) togglePause();
-        else if (pauseSel===1){gameState='title';stopMusic();}
-        else resetGame();
+        else if (pauseSel===1) resetGame();
+        else { gameState='title'; stopMusic(); }
     }
     if (!isDown('Space')&&!isDown('Enter')&&!isDown('KeyZ')) _pen=false;
     if (isDown('Escape')) togglePause();
